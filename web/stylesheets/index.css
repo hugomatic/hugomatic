@@ -1,0 +1,41 @@
+#main{
+  float:left;
+
+  width:auto;
+}
+
+#image{
+  float:left;
+}
+
+#browser{
+  margin-left: 20;
+  float:right;
+  // width:auto;
+}
+
+body {
+  //font-family: Verdana, Helvetica, sans-serif;
+  background-color: #DDDDDD;
+    
+}
+/*
+a {
+  color:#36a;
+  }
+a img {
+  border-width:0;
+  }
+h1, h2, h3, ul, li, form {
+  margin:0;
+  padding:0;
+  }
+ul, li {
+  list-style:none;
+  
+  }
+*/
+
+
+  
+  

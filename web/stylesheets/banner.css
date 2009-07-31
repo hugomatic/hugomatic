@@ -1,0 +1,12 @@
+#banner { 
+  background:#579;
+  width:100%;
+  border-bottom:2px solid #be0;
+  list-style:none;
+  }
+  
+IMG.bannerImg {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    }

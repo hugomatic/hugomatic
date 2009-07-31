@@ -1,0 +1,29 @@
+/* =Footer
+----------------------------------------------- */
+
+.unit {
+ 
+  white-space:nowrap;
+  }
+
+#footer {
+  float:left;
+  width:100%;
+  border-top:2px solid #be0;
+
+  }
+
+#footer hr {
+  display:none;
+  margin:0;
+  }
+  
+#footer p {
+  font-family: Verdana, Helvetica, sans-serif;
+  background:#579;
+  margin:0;
+  padding:10px;
+  text-align:center;
+  color:#fff;
+  }
+

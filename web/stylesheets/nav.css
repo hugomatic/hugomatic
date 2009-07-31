@@ -1,0 +1,41 @@
+/* =Nav
+----------------------------------------------- */
+#nav {
+  font-family: Verdana, Helvetica, sans-serif;
+//  background-color: #DDDDDD;
+  background:#135 url("img/bg-nav.jpg") repeat-x 0 0;
+  float:left;
+  width:100%;
+  margin:0;
+  padding:0;
+  border-bottom:2px solid #135;
+  list-style:none;
+  }
+#nav li {
+  background:none;
+  display:inline;
+  padding:0;
+  }
+#nav li a, #nav li strong {
+  float:left;
+  width:auto;
+  padding:5px 9px 3px;
+  border-left:1px solid #579;
+  border-right:1px solid #135;
+  color:#def;
+  /*text-transform:uppercase;*/
+  text-decoration:none;
+  }
+#nav li strong {
+  background:#246;
+  color:#fff;
+  }
+#nav li a strong {
+  padding:0;
+  border-width:0;
+  }
+#nav li a:hover {
+  background:#246;
+  border-left-color:#246;
+  color:#cf0;
+  }

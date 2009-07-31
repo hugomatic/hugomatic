@@ -1,0 +1,16 @@
+div.trace { color:darkblue;
+        padding:10;
+            margin:10 10 10 40; 
+           background-color:lightgrey;}
+
+a.val {color:darkgreen}
+
+a.nb { cursor:pointer;
+       color:darkgreen; 
+}
+
+// value for local or global
+
+
+a.nb:hover { color:red; text-decoration: underline;}
+
