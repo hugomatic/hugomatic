@@ -179,16 +179,6 @@ F%.3f  (Feed rate in mm/min)
 def footer():
     print "M2"
 
-# used for engraving
-#def circle(x,y,dia, safety, zCut): 
-#    print ""
-#    print "(circle)"
-#    print "g0 x%.4f y%.4f z%.4f" %(x,y+dia/2,safety)
-#    print "g01 z%.4f" %(zCut)
-#    print "g3 x%.4f y%.4f i0 j[0 - [%.4f / 2]]" %(x,y+dia/2,dia)
-#    print "g0 z%.4f" %(safety)
-
-
 
 def _zigzag_dy(x0, y0, x1, y1, dy):
             y = y0
