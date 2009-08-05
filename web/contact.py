@@ -23,7 +23,7 @@
 #
 
 
-from hugomatic.web.utils import  printHead, printBanner, printFooter, printContactNavBar
+from utils import  printHead, printBanner, printFooter, printContactNavBar
 
 
 print "Content-Type: text/html"
