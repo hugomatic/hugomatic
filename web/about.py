@@ -29,7 +29,7 @@ from utils import  printHead, printBanner, printFooter, printContactNavBar
 print "Content-Type: text/html"
 print
 
-printHead('Contact Hugomatic',('nav','banner','footer'), path="")
+printHead('About Hugomatic',('nav','banner','footer'), path="")
 printBanner( path='')
 
 printContactNavBar()
@@ -41,12 +41,24 @@ print '<div id="about">'
 print """
 
 <h2>What we do</h2>
-
+We build Open Source platform to generate Open Physical Objects. We supply free projects for hobby CNC milling and lathes. 
+<h3>Free designs</h3>
+The designs are free, so anyone can build the objects on their own equipment.
+<h3>Generated objects</h3>
+Because the objects are created from a generator program, rather than drawings for example, they can be customized and personalized. So the same object can be made with different tools, different material etc. 
+Instead of the traditional one program to make a million identical objects, we want to enable one million people to create a unique object.
+That's why instead of fancy hard to learn 3D CAD/CAM programs that can do almost anything but leaves you starting from scratch each time, we want to see a program evolve for each object. 
+<h3>Open Source</h3>
+Because the designs are open, anyone can improve the generators, and build new designs on top of existing ones. People can work in teams, improving the design over time, using the collaborative tools that have enabled the Open Source movement.
+Designs need to evolve over time, bugs must be identified and fixed. Experiments and one offs must be encouraged. Building objects with the tools used to build complex software is a powerful idea.
+ 
 """
 
 print """
 
 <h2>Who we are</h2>
+
+Hugomatic is a small company founded by Hugo Boyer. He wants to share his fascination for robotics, electronics, computers and machines.
 
 """
 
