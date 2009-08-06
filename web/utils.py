@@ -140,7 +140,7 @@ def printGetNavBar(sourceFile):
     <ul id='nav'>
         <li><a href="index.py">Home</a></li>   
         <li><a href=\"%s\">View source: <b>%s</b></a></li>
-        <li><a href="../../../cncOnline.zip">Get Hugomatic</a></li>
+        <li><a href="http://github.com/hugomatic/cncOnline/downloads">Get Hugomatic</a></li>
         <li><a href="hugomatic/web/todo.py">Report a Bug</a></li>
         <li><a href="hugomatic/web/contact.py">Contact us</a></li>
     </ul>
@@ -150,14 +150,14 @@ def printContactNavBar():
     print """
         <ul id='nav'>
             <li><a href="../../index.py">Home</a></li>   
-            <li><a href="../../../cncOnline.zip">Get Hugomatic</a></li>
+            <li><a href="http://github.com/hugomatic/cncOnline/downloads">Get Hugomatic</a></li>
             <li><a href="todo.py">Report a Bug</a></li>
         </ul>"""
 
 def printIndextNavBar():
     print """
         <ul id='nav'> 
-            <li><a href="../../../cncOnline.zip">Get Hugomatic</a></li>
+            <li><a href="http://github.com/hugomatic/cncOnline/downloads">Get Hugomatic</a></li>
             <li><a href="todo.py">Report a Bug</a></li>
             <li><a href="hugomatic/web/contact.py">Contact us</a></li>
         </ul>"""
@@ -170,7 +170,7 @@ def printPostNavBar(sourceFile):
             <li><a href="index.py">Home</a></li>   
             <li><a href=\"%s\">Run <b>%s</b> again</a></li>
             <li><a href=\"%s\">View source: <b>%s</b></a></li>
-            <li><a href="../../../cncOnline.zip">Get Hugomatic</a></li>
+            <li><a href="http://github.com/hugomatic/cncOnline/downloads">Get Hugomatic</a></li>
             <li><a href="hugomatic/web/todo.py">Report a Bug</a></li>
             <li><a href="hugomatic/web/contact.py">Contact us</a></li>
         </ul>
@@ -190,7 +190,7 @@ def printSourceViewNavBar(sourceFile):
     <ul id='nav'>
         <li><a href="../../index.py">Home</a></li>   
         <li><a href=\"/%s\">Run <b>%s</b></a></li>
-        <li><a href="../../../cncOnline.zip">Get Hugomatic</a></li>
+        <li><a href="http://github.com/hugomatic/cncOnline/downloads">Get Hugomatic</a></li>
         <li><a href="todo.py">Report a Bug</a></li>
         <li><a href="contact.py">Contact us</a></li>
     </ul>
