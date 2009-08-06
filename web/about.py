@@ -35,14 +35,47 @@ printBanner( path='')
 printContactNavBar()
        
 
-print "<h1>Contact us</h1>"
-print '<div id="contact">' 
+print "<h1>About Hugomatic</h1>"
+print '<div id="about">' 
 
-print '<img src="stylesheets/img/phone.jpg">'
+print """
+
+<h2>What we do</h2>
+
+"""
+
+print """
+
+<h2>Who we are</h2>
+
+"""
+
+print """  
+<h2>CNC Online</h2>
+<p>
+The CNC online project is set of Open Source web and desktop tools written in Python. It allows you to generate useful CNC snippets of code from easy to fill form.
+</p>
+<p>
+CNC Online offers a variety of useful generators: circular and rectangular pockets milling, bolt circles drilling, etc.
+On top of the basic operations, it includes higher level operations such as SVG file path tracing.
+</p>
+
+"""
+
+print """
+
+<h2>The Hugomatic library</h2>
+
+"""
+
+print """ 
+
+<h2>Intellectual Property</h2>
+
+"""
 
 print '<br>Hugomatic is a Montreal based company'
-print '<br>email: hugo@hugomatic.ca'
-print '<br><br><br>'
+
 
 print '</div>'
 
