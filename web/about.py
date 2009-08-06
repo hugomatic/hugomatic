@@ -42,6 +42,7 @@ print """
 
 <h2>What we do</h2>
 We build Open Source platform to generate Open Physical Objects. We supply free projects for hobby CNC milling and lathes. 
+We want to empower people to make professional objects simply, and want to remove the complexity of hobby robotics. 
 <h3>Free designs</h3>
 The designs are free, so anyone can build the objects on their own equipment.
 <h3>Generated objects</h3>
@@ -59,7 +60,6 @@ print """
 <h2>Who we are</h2>
 
 Hugomatic is a small company founded by Hugo Boyer. He wants to share his fascination for robotics, electronics, computers and machines.
-
 """
 
 print """  
@@ -78,11 +78,18 @@ print """
 
 <h2>The Hugomatic library</h2>
 
+The Hugomatic python library is the engine behind CNC Online. It is both web based, so you can use it without installing any software.</p>
+and a local application, so you can use it on your own machine when you are offline.</p>
+<p>Made for the tinkerer, not the programming expert: it has a simple api to create generators, 
+it allows you to debug your program online (with a stack trace for every line of G-code), and a debugger friendly mechanism.</p>
+<p>It is also easy to learn, with examples you can browse online</p>
 """
 
 print """ 
 
 <h2>Intellectual Property</h2>
+
+Not here.
 
 """
 
