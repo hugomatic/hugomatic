@@ -69,7 +69,7 @@ def add_tree_nodes_from_xml(html_tree, dom):
 
 
 
-def printIndex(dom):
+def print_index(dom, header = None):
     
     print "Content-Type: text/html"
     print
@@ -78,8 +78,10 @@ def printIndex(dom):
     printBanner()
     printIndextNavBar()
     #printContactNavBar()
-    
-    print  "<h1>Hugomatic CNC</h1><h2>online GCODE generators</h2>"
+    if header:
+        print header
+    else:
+        print  "<h1>Hugomatic CNC</h1><h2>online GCODE generators</h2>"
     print "<br>"
     print '<div id="main">'
  
@@ -88,17 +90,13 @@ def printIndex(dom):
     add_tree_nodes_from_xml(tree, dom)
     html_tree = tree.get_html()
     print html_tree
-    ##print '</div>'
-    
-        
     print """
-    
+
   <div id="image">
    <IMG SRC="images/index.jpg">
   </div>
 """
    
     print '</div>' # main
-
     printFooter()
     print "</body>"
