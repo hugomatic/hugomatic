@@ -29,7 +29,7 @@ from utils import  printHead, printBanner, printFooter, printContactNavBar
 print "Content-Type: text/html"
 print
 
-printHead('About Hugomatic',('nav','banner','footer'), path="")
+printHead('About Hugomatic',('nav','about','banner','footer'), path="")
 printBanner( path='')
 
 printContactNavBar()
@@ -89,11 +89,9 @@ print """
 
 <h2>Intellectual Property</h2>
 
-Not here.
+Not much here.
 
 """
-
-print '<br>Hugomatic is a Montreal based company'
 
 
 print '</div>'
