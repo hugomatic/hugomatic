@@ -77,12 +77,16 @@ def print_index(dom, header = None):
     printHead('Welcome to Hugomatic', ('banner','index','nav','footer'), extraText=HtmlTree.html_header_text)
     printBanner()
     printIndextNavBar()
+    
+   
+    
     #printContactNavBar()
     if header:
         print header
     else:
         print  "<h1>Hugomatic CNC</h1><h2>online GCODE generators</h2>"
     print "<br>"
+    
     print '<div id="main">'
  
     ##print '<div id="browser" class="filetree treeview-famfamfam">'
@@ -90,8 +94,11 @@ def print_index(dom, header = None):
     add_tree_nodes_from_xml(tree, dom)
     html_tree = tree.get_html()
     print html_tree
+    ##print '</div>'
+    
+       
     print """
-
+    
   <div id="image">
    <IMG SRC="images/index.jpg">
   </div>

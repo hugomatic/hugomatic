@@ -110,7 +110,7 @@ def printBanner(path = "hugomatic/web/"):
 #    print "<h4>printBanner path '" + path + "'</h4>"
     print """
     <div id="banner">
-       <a href="http://basbrun.com/"><IMG class="bannerImg" SRC="%simg/banner.gif"/></a>
+       <a href="http://hugomatic.ca/"><IMG class="bannerImg" SRC="%simg/banner.gif"/></a>
     </div>
     """ % (path)
 
@@ -146,6 +146,15 @@ def printGetNavBar(sourceFile):
         <li><a href="hugomatic/web/contact.py">Contact us</a></li>
     </ul>
     """ % (sourceRef, name)
+
+def printAboutNavBar():
+    print """
+        <ul id='nav'>
+            <li><a href="../../index.py">Home</a></li>   
+            <li><a href="http://github.com/hugomatic/cncOnline/downloads">Get Hugomatic</a></li>
+            <li><a href="http://github.com/hugomatic/cncOnline/issues">Report a Bug</a></li>
+            <li><a href="contact.py">Contact us</a></li>
+        </ul>"""
     
 def printContactNavBar():
     print """
@@ -153,7 +162,7 @@ def printContactNavBar():
             <li><a href="../../index.py">Home</a></li>   
             <li><a href="http://github.com/hugomatic/cncOnline/downloads">Get Hugomatic</a></li>
             <li><a href="http://github.com/hugomatic/cncOnline/issues">Report a Bug</a></li>
-            <li><a href="hugomatic/web/about.py">About Hugomatic</a></li>
+            <li><a href="about.py">About Hugomatic</a></li>
         </ul>"""
 
 def printIndextNavBar():

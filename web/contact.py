@@ -22,9 +22,11 @@
 # hugo@hugomatic.ca
 #
 
-
-from utils import  printHead, printBanner, printFooter, printContactNavBar
-
+try:
+    from utils import  printHead, printBanner, printFooter, printContactNavBar
+except:
+    # google app engine
+    from hugomatic.web.utils import  printHead, printBanner, printFooter, printContactNavBar
 
 print "Content-Type: text/html"
 print

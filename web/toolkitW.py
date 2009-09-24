@@ -27,22 +27,34 @@ import cgi
 import types
 #import re
 import cgitb; cgitb.enable()
-import utils
 import atexit
+
+import utils
 
 #from utils import HtmlTree
 
 # GOOGLE APP ENGINE PATCH!!!
-
+googleAppEngine = False
 try:
     import google.appengine
     import imp
+    import hugomatic.web.gcode2svg as gcode2svg
+    
+    googleAppEngine = True
+    
     def get_suffixes():
         return [('.py', 'U', 1)]
     imp.get_suffixes = get_suffixes
 except:
-    pass
+    import gcode2svg
 
+
+
+def print_stack_info():
+    """
+    Not used in the web version
+    """
+    pass
 
 def gcodeCommentEscape(s):
     """
@@ -52,6 +64,54 @@ def gcodeCommentEscape(s):
     niceStr = niceStr.replace(")", "-")
     return niceStr
 
+def print_interactive_post_footer():
+    sys.stdout = sys.stdout.out # remove the line numbering decorator
+    print "</pre>" #no more space preserving
+    utils.printFooter()
+    print "</body></html>"
+
+svg_document = None
+    
+def print_svg_post_footer(stdout1 = None, svg1 = None):
+    svg = svg1
+    if svg1 == None:
+        svg = sys.stdout.svg
+    stdout = stdout1
+    if stdout == None:
+        sys.stdout = sys.stdout.out
+    else:
+        sys.stdout = stdout
+
+    import traceback
+    traceback.print_stack()
+
+    svg_text = svg.get_svg_document()
+    print svg_text
+    
+class SvgRedirectStdOut:
+    
+    def __init__(self, out):    
+        self.out = out
+        self.svg = gcode2svg.Gcode2Svg()
+        svg_document = self.svg
+        
+    def writeline(self, line):
+        self.svg.add_gcode_line(line)
+        ll = line.lower()
+        if googleAppEngine:
+            # end of document
+            if ll.split('(')[0].find("m2") != -1 :
+                print_svg_post_footer(self.out, self.svg)
+        
+    def write(self, s): 
+         lines = s.splitlines()
+         if len(lines) > 1:
+             for l in lines:
+                 self.writeline(l + '\n')
+         else:
+             self.writeline(s)
+    
+    
 
 class RedirectStdOut:
     
@@ -145,19 +205,6 @@ class RedirectStdOut:
             for key, val in globals_dict.items():
                 printVar(key,val)
                 
-#        def print_variables1(line_nb, locals_dict, globals_dict):
-#            tree_name = "var_%s" % line_nb
-#            var_tree = HtmlTree(tree_name)
-#            var_tree.open_folder('locals')
-#            for key, val in locals_dict.items():
-#                add_var_to_tree(var_tree, key,val)
-#            var_tree.close_folder()
-#            var_tree.open_folder('globals')
-#            for key, val in globals_dict.items():
-#                add_var_to_tree(var_tree, key,val)
-#            var_tree.close_folder()
-#            html = "\n</pre>" + var_tree.get_html() + "<pre>\n"
-#            self.out.write(html)
             
         def print_variables (line_nb, locals_dict, globals_dict):    
             print_locals_dict(locals_dict)
@@ -228,6 +275,7 @@ class RedirectStdOut:
             divName = "div" + str(nb)
             nbStr = """<br><a class="nb" onclick="toggle(""" +  divName + ')">' + s + "</a>   "
             return nbStr
+        
             
         if s == '\n':
             if self.isToken:
@@ -242,6 +290,11 @@ class RedirectStdOut:
             niceStr = self._prettyGcode(s)
             self.out.write(niceStr)
             self.traceBack()
+            ll = s.lower()
+            if googleAppEngine:
+                if ll.split('(')[0].find("m2") != -1 :
+                    print_interactive_post_footer()
+
 
     def write(self, s):
         if self.prettyPrint == False:
@@ -266,11 +319,7 @@ class RedirectStdOut:
     def readline(self):
         return None
 
-def printPostFooter():
-    sys.stdout = sys.stdout.out # remove the line numbering decorator
-    print "</pre>" #no more space preserving
-    utils.printFooter()
-    print "</body></html>"
+
           
 class Parameters(object): 
     postHead = """
@@ -302,6 +351,14 @@ function OnButtonPreview()
 {
 
     document.GcodeForm.generation.value = "interactive"
+    document.GcodeForm.submit();             // Submit the page
+
+    return true;
+}
+
+function OnButtonSvg()
+{
+    document.GcodeForm.generation.value = "svg"
     document.GcodeForm.submit();             // Submit the page
 
     return true;
@@ -350,30 +407,41 @@ function OnButtonDownload()
         path = self.getRelativePath(fn)
         open(path, 'wb').write(content)   
         return fn
+    
+    def _interactive_post(self, name, output_file, form):
+         print "Content-Type: text/html"
+         print
+         html_header = self.postHead
+         # add the tree control javascript stuff
+         #html_header += HtmlTree.html_header_text
+         utils.printHead('Hugomatic gcode', ('banner','nav','interactive','footer'),  extraText=html_header)
+         utils.printBanner()
+         utils.printPostNavBar(self.fileName)
+         print "<h1>" + output_file + "</h1><Pre>"
+         #print '<h2>Source code: <a href="sourceView.py?src=' + name + '">' + name+'</a></h2>'
+         old_out = sys.stdout
+         sys.stdout = RedirectStdOut(old_out, True)
+         # add hook to end program with a copyright notice
+         if googleAppEngine == False:
+             atexit.register(print_interactive_post_footer)
 
-    def _printPost(self):
-        name = os.path.basename(self.fileName)
-        outputFile = name.replace(".py",".ngc")
-        form = cgi.FieldStorage()       
-        if form['generation'].value == 'interactive':
-             print "Content-Type: text/html"
-             print
-             html_header = self.postHead
-             # add the tree control javascript stuff
-             #html_header += HtmlTree.html_header_text
-             utils.printHead('Hugomatic gcode', ('banner','nav','interactive','footer'),  extraText=html_header)
-             utils.printBanner()
-             utils.printPostNavBar(self.fileName)
-             print "<h1>" + outputFile + "</h1><Pre>"
-             #print '<h2>Source code: <a href="sourceView.py?src=' + name + '">' + name+'</a></h2>'
-             old_out = sys.stdout
-             sys.stdout = RedirectStdOut(old_out, True)
-             # add hook to end program with a copyright notice
-             atexit.register(printPostFooter)
-        else:           
-            print 'Content-Type: text/plain'
-            print "Content-Disposition: attachment; filename=\"" + outputFile + "\""
-            print
+    def _svg_post(self, name, output_file, form):
+        #print 'Content-Type: text/plain'
+        print  "Content-Type: image/svg+xml"
+        print
+        
+        
+        old_out = sys.stdout
+        sys.stdout = SvgRedirectStdOut(old_out)
+         # add hook to end program with an svg text
+        if googleAppEngine == False: 
+            atexit.register(print_svg_post_footer)
+
+    
+    def _download_post(self, name, output_file, form):
+        print 'Content-Type: text/plain'
+        print "Content-Disposition: attachment; filename=\"" + output_file + "\""
+        print
         
         print "( " + self.title + " )"
         print "( " + self.desc + " )"
@@ -410,6 +478,20 @@ function OnButtonDownload()
             strV =  name + " = " + str(newVal) + ", "+ desc+ " default: "+ str(value)
             s2 = "( " + gcodeCommentEscape(strV) + ")"
             print s2
+    
+    def _printPost(self):
+        name = os.path.basename(self.fileName)
+        output_file = name.replace(".py",".ngc")
+        form = cgi.FieldStorage()       
+        
+        if form['generation'].value == 'interactive':
+            self._interactive_post(name, output_file, form)
+        if form['generation'].value == 'download':
+            self._download_post(name, output_file, form)
+        if form['generation'].value == 'svg':
+            self._svg_post(name, output_file, form)
+                   
+            
         
     def _printForm(self):
         """
@@ -504,6 +586,7 @@ function OnButtonDownload()
     <input type="hidden" name="generation" value="none" />        
 <br><INPUT type="button" value="Generate with UI" name=button1 onclick="return OnButtonPreview();">
     <INPUT type="button" value="Generate & download" name=button2 onclick="return OnButtonDownload();">
+    <INPUT type="button" value="SVG preview (BETA)" name=button3 onclick="return OnButtonSvg();">
     <input value="RESET" type="reset"> 
     
              </fieldset>

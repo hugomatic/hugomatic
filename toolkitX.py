@@ -32,8 +32,22 @@ import re
 
 
 
-
-
+def print_debug_info():
+    import inspect
+    import sys, traceback
+    
+    traceback.print_stack( file = sys.stdout)    
+    
+    stack_frame = inspect.currentframe().f_back # skip 'print_stack_info'
+    globals_dict = stack_frame.f_globals
+    
+    skip_list = ("__builtins__","__doc__")
+    print "\n  Global variables:"
+    for k,v in globals_dict.iteritems():
+        if k not in skip_list:
+            print "   ", k,":",v
+    
+           
 # Exception class for program arguments errors
 class ParamsError(Exception):
      def __init__(self, value):
@@ -75,7 +89,11 @@ class RedirectStdOut:
                 if self.printLineCounter == self.debugLine:
                     if self.callback:
                         cb = self.callback
+                        # replace stdout temporarily
+                        tmp_out = sys.stdout
+                        sys.stdout = self.stdout
                         cb()
+                        sys.stdout = tmp_out
                         self.debugLine = -1
                     else:
                         self.stdout.write ("(----- debugStop! line: %d ----- ERROR: no callback defined!)" % self.printLineCounter )
