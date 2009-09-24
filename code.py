@@ -21,7 +21,7 @@
 #
 import paths
 
-def z_cut_compiler(zdepth, cut, z_surf= 0.0, first_cut = 0.0, last_cut = 0.0):
+def z_cut_compiler(z_depth, cut, z_surf= 0.0, first_cut = 0.0, last_cut = 0.0):
        
     if cut <=  0.0:   
        msg = "Wrong cut: '" + str(cut) + "'. Cut must be >= 0.0"
@@ -31,23 +31,23 @@ def z_cut_compiler(zdepth, cut, z_surf= 0.0, first_cut = 0.0, last_cut = 0.0):
     z = z_surf
     z = z - cut
             
-    while z > zdepth:
-        if z < zdepth:
-            z = zDepth
+    while z > z_depth:
+        if z < z_depth:
+            z = z_depth
         cuts.append(z)
         z = z -cut
     
     if len(cuts) == 0:
-        cuts.append(zdepth)
-    if cuts[-1] > zdepth:
-        cuts.append(zdepth)
+        cuts.append(z_depth)
+    if cuts[-1] > z_depth:
+        cuts.append(z_depth)
     
     if first_cut > 0:
         zfirst = z_surf - first_cut
         if cuts[0] < zfirst:
             cuts.insert(0,zInit)
     if last_cut > 0:
-        zlast = zdepth + last_cut
+        zlast = z_depth + last_cut
         if cuts[-1] < zFinish:
             cuts.insert(-1, zlast)     
     return tuple(cuts)
@@ -89,7 +89,7 @@ g0 Z%(z_rapid).4f
         
 (full circle at the actual depth)
 g3 x%(x1).4f y%(yPos).4f i[-1.0 * %(rad).4f] j0
-g0 x%(xPos).4f y%(yPos).4f 
+ 
 g0 z%(safetyHeight).4f
 
 """ % self.dict
@@ -260,10 +260,10 @@ class _PocketRectangle(object):
 def pocket_rectangle(x0, y0, x1, y1, z_safe, z_rapid,  tool_dia, cuts):
     _PocketRectangle( x0, y0, x1, y1, z_safe, z_rapid,  tool_dia, cuts)
     
-def cylinder(x, y, outsidedia, tool_dia, z_safe, cuts):
-    pie_segment(0., 360., x, y, 0., outsidedia, tool_dia, z_safe, cuts)
+def cylinder(x, y, outsidedia, tool_dia, z_safe, z_rapid, cuts):
+    pie_segment(0., 360., x, y, 0., outsidedia, tool_dia, z_safe, z_rapid, cuts)
 
-def pie_segment(degAngleFromHorizonStart, degAngleFromHorizonEnd, x, y, insideDia, outsideDia, tool_dia, safeZ, cuts):
+def pie_segment(degAngleFromHorizonStart, degAngleFromHorizonEnd, x, y, inside_dia, outside_dia, tool_dia, safe_z, rapid_z, cuts):
     import math
     def arc(x,y, degAngleFromHorizonStart, degAngleFromHorizonEnd, radius, cutZ):
         startRad = math.radians(degAngleFromHorizonStart)        
@@ -287,19 +287,20 @@ def pie_segment(degAngleFromHorizonStart, degAngleFromHorizonEnd, x, y, insideDi
         return (startX, startY, endX, endY, i, j, "g2")
         
         print "G0 X%.4f y%.4f" % (startX, startY)
+        print "G1 z%.4f" % (z_rapid)
         print "G1 z%.4f" % (cutZ)
         print "G2 x%.4f y%.4f i%.4f j%.4f" % (endX, endY, i, j)
     
-    rad = insideDia * 0.5
+    rad = inside_dia * 0.5
     if rad <= tool_dia * 0.75:
         rad = tool_dia * 0.75
     
     rads = [rad]
-    while rad < outsideDia * 0.5:
+    while rad < outside_dia * 0.5:
         rad += tool_dia * 0.75
         rads.append(rad)
-    if rads[-1] > outsideDia * 0.5:
-        rads[-1] = outsideDia * 0.5
+    if rads[-1] > outside_dia * 0.5:
+        rads[-1] = outside_dia * 0.5
     
     for cutZ in cuts:
         for rad in rads:
@@ -307,7 +308,7 @@ def pie_segment(degAngleFromHorizonStart, degAngleFromHorizonEnd, x, y, insideDi
             print "G0 X%.4f y%.4f" % (startX, startY)
             print "G1 z%.4f" % (cutZ)
             print "G2 x%.4f y%.4f i%.4f j%.4f" % (endX, endY, i, j)
-            print "G0z%.4f" % (safeZ)
+            print "G0z%.4f" % (safe_z)
 
 
 def pie_segment_tool_comp(degAngleFromHorizonStart, degAngleFromHorizonEnd, x, y, insideDia, outsideDia, tool_dia, safeZ, cuts):
