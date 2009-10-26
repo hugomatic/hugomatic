@@ -123,7 +123,31 @@ class Parameters:
             self.old_stdout = sys.stdout
             sys.stdout = RedirectStdOut(self.old_stdout)
             sys.stdout.setDebugLine(debug_line, self.debug_callback)
-            
+    
+    def addArgument(self, object, title, choices=None, filePath=False, short = None, help=None, group=None):
+        frame = inspect.currentframe().f_back
+        frameInfo = inspect.getframeinfo( frame )
+        call = str(frameInfo[3])
+        sp = call.split('(')
+        s = sp[1] 
+        sp2 = s.split(",")
+        s = sp2[0]
+        name =  s.split(')')[0]
+        name = name.strip()   
+
+        if self.argumentsDict.__contains__(name):
+            s = 'The parameter "' + name + '" already exists'
+            raise ParamsError(s)
+        if self.globalValues.__contains__(name):
+            default = self.globalValues[name] #self.getValues()[name]
+            self.__addArg(name, default, choices, filePath, short, title, help, group)
+        else:
+            s = 'The global variable "' + name + '" does not exist'
+            raise ParamsError(s)
+
+
+
+        
     def setDebugLine(self, debugLine, callBack = None):
         if callBack:
             self.debug_callback = callBack
@@ -251,7 +275,7 @@ class Parameters:
         return resp
             
     def __showDialog(self):
-        from toolkitTk import ParameterGui
+        from toolkitTk import show_params_gui #ParameterGui
         self.__autoLoad()    
         values = Odict()
         titles = dict()
@@ -278,15 +302,15 @@ class Parameters:
         if len(self.pictureFile) > 0:
             picturePath = os.path.join(imageDir, self.pictureFile)
         withDebugLine = self.debug_callback != None
-        dialog = ParameterGui(self.getTileAndDesc(), values, titles, defaults, choicesDict, filePathDict, self.usage(), withDebugLine, picturePath, self.history)
-        dialog.mainloop()
-        if dialog.okButtonHasBeenPressed:
-            if dialog.clearButtonHasBeenPressed:
+        
+        title_and_desc = self.getTileAndDesc()
+        usage = self.usage()
+        ok_btn_pressed, clear_btn_pressed, debug_line, vals = show_params_gui(title_and_desc, values, titles, defaults, choicesDict, filePathDict, usage, withDebugLine, picturePath, self.history)
+        if ok_btn_pressed:
+            if clear_btn_pressed:
                 self.__deleteAutosaveFile()
             if self.debug_callback:
-               debugLine = dialog.getDebugLine() 
-               self.setDebugLine(debugLine)
-            vals = dialog.getChangedValues()
+               self.setDebugLine(debug_line)
             changes = len(vals) > 0
             if changes == True:
                    for k in vals:
@@ -384,30 +408,8 @@ class Parameters:
                 
             print "(cmd line argument '" + argument + "' value = '"+ str(a) + "')"
             self.setValue(argument, a)
-            
-
         return True
             
-    def addArgument(self, object, title, choices=None, filePath=False, short = None, help=None, group=None):
-        frame = inspect.currentframe().f_back
-        frameInfo = inspect.getframeinfo( frame )
-        call = str(frameInfo[3])
-        sp = call.split('(')
-        s = sp[1] 
-        sp2 = s.split(",")
-        s = sp2[0]
-        name =  s.split(')')[0]
-        name = name.strip()   
-
-        if self.argumentsDict.__contains__(name):
-            s = 'The parameter "' + name + '" already exists'
-            raise ParamsError(s)
-        if self.globalValues.__contains__(name):
-            default = self.globalValues[name] #self.getValues()[name]
-            self.__addArg(name, default, choices, filePath, short, title, help, group)
-        else:
-            s = 'The global variable "' + name + '" does not exist'
-            raise ParamsError(s)
                 
     def __addArg(self, name, default, choices, filePath, short, title, helpString, group):
         if self.argumentsDict.__contains__(name):

@@ -76,7 +76,7 @@ def repeatCuts(points, cuts, zsafe, zsurf):
         for p in points:
             xyz.append( (p[0], p[1], z) )
         t = tuple(xyz)
-        gCut(t, zSafe, zsurf)
+        gCut(t, zsafe, zsurf)
         # don't bother going to z safe between each cut, stay at zSurf
         zsafe = zsurf
         zsurf = None
