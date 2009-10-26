@@ -103,16 +103,16 @@ def printHead(title, styleSheets, path="hugomatic/web/", extraText=None):
 #    print "<h4>Current working dir:"  + os.getcwd() + "</h4>"
 #    print "<h4>printHead path '" + path + "'</h4>"
 
-def printBanner(path = "hugomatic/web/"):
+def printBanner(path = "hugomatic/web/", ref = "http://hugomatic.ca/", img="banner.gif"):
     path += "stylesheets/"
 #    cwd = os.getcwd()
 #    print "<h4>Current working dir:"  + cwd + "</h4>"
 #    print "<h4>printBanner path '" + path + "'</h4>"
     print """
     <div id="banner">
-       <a href="http://hugomatic.ca/"><IMG class="bannerImg" SRC="%simg/banner.gif"/></a>
+       <a href="%s"><IMG class="bannerImg" SRC="%simg/%s"/></a>
     </div>
-    """ % (path)
+    """ % (ref, path,img)
 
 def printPyFileSrcLinks(root):
     path = "hugomatic/web/"
