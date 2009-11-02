@@ -277,22 +277,17 @@ class Parameters:
     def __showDialog(self):
         from toolkitTk import show_params_gui #ParameterGui
         self.__autoLoad()    
+        
+        parameters = Odict()
+        
         values = Odict()
         titles = dict()
         defaults = dict()
         choicesDict = dict()
         filePathDict = dict()
-        for k in self.argumentsDict.keys():
-            title = self.getAttributeValue(k, 'title')
-            titles[k] = title
-            value = self.globalValues[k]
-            values[k] = value
-            default = self.getAttributeValue(k, 'default')
-            defaults[k] = default
-            choices = self.getAttributeValue(k, 'choices')
-            choicesDict[k] = choices
-            isPath = self.getAttributeValue(k, 'filePath') == True
-            filePathDict[k] = isPath
+        for k in self.argumentsDict.keys():       
+            parameters[k] = {'value':self.globalValues[k]}
+            parameters[k].update(self.argumentsDict[k])
         
         path = inspect.getfile(Parameters)
         tail,head =  os.path.split(path)
@@ -301,11 +296,11 @@ class Parameters:
         picturePath = None
         if len(self.pictureFile) > 0:
             picturePath = os.path.join(imageDir, self.pictureFile)
-        withDebugLine = self.debug_callback != None
-        
         title_and_desc = self.getTileAndDesc()
+        
         usage = self.usage()
-        ok_btn_pressed, clear_btn_pressed, debug_line, vals = show_params_gui(title_and_desc, values, titles, defaults, choicesDict, filePathDict, usage, withDebugLine, picturePath, self.history)
+        dbg_callback = str(self.debug_callback)
+        ok_btn_pressed, clear_btn_pressed, debug_line, vals = show_params_gui(title_and_desc, parameters, usage, dbg_callback, picturePath, self.history)
         if ok_btn_pressed:
             if clear_btn_pressed:
                 self.__deleteAutosaveFile()

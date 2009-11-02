@@ -24,9 +24,10 @@ from Tkinter import *
 from tkFileDialog   import askopenfilename 
 
 
-def show_params_gui( title_and_desc, values, titles, defaults, choices, filePaths, usage, withDebugLine, picture_path, history ):
-    gui = ShowGui()
-    gui.show( title_and_desc, values, titles, defaults, choices, filePaths, usage, withDebugLine, picture_path, history )   
+def show_params_gui( title_and_desc, parameters_dict, usage, dbg_callback, picture_path, history ):
+                # p_dict,          title_and_desc, usage, with_debug_line, picture_path, history, parameters_dict
+    gui = ShowGui(title_and_desc, usage, dbg_callback, picture_path, history, parameters_dict)
+    gui.show()   
     dbg_line = gui.debug_line
     clear = gui.clear_btn_pressed
     ok_pressed = gui.ok_btn_pressed
@@ -103,7 +104,8 @@ def file_picker_callback(entry):
 
 class HugomaticGui(object): 
    
-    def __init__(self):        
+    def __init__(self):
+                       
         self.ok_btn_pressed = False
         self.clear_btn_pressed = False 
         self.debug_line = None
@@ -118,7 +120,19 @@ class HugomaticGui(object):
         self._disable_history_browsing()
         
     def _default_pressed(self):
-        self.__set_values_from_dict(self.default_values)
+        #self.__set_values_from_dict(self.default_values)
+        for param, attributes in self.parameters_dict.iteritems():
+            value = attributes['default']
+            s = str(value)
+            if type(value) == bool:
+                #print "BOOOOO", value
+                if value:
+                    s = '1'
+                else:
+                    s = '0'
+            self._set_widget_value_string(param, s)
+            
+        
 
     def __set_values_from_dict(self, values):
         for k in values:
@@ -134,23 +148,32 @@ class HugomaticGui(object):
                
     def _history_pressed(self, what):
         values = []
-        for ev in self.history:
-            date = ev[0]
-            if date == what:
-                values = ev[1]
-                self.__set_values_from_dict(values)
+        index = -1
+        s = what.split('[')[1].split(']')[0]
+        index = int(s) -1
+        ev = self.history[index]
+        values = ev[1]
+        self.__set_values_from_dict(values)
+        
+#        for ev in self.history:
+#            date = ev[0]
+#            if date == what:
+#                values = ev[1]
+#                self.__set_values_from_dict(values)
 
 
     def _ok_pressed(self):
         self.ok_btn_pressed = True
-        if self.with_debug_line:
+        if self.dbg_callback:
             s = self._get_widget_value_as_string('_debug_line_')
-            self.debug_line = int( s)
+            self.debug_line = int(s)
         self.return_vals = self._get_new_values()
         self._quit_gui()
     
+
+    
     def _get_current_value(self, k):
-        old_value = self.old_values[k]
+        old_value = self.parameters_dict[k]['value']
         old_type = type(old_value)  
         user_value_string = self._get_widget_value_as_string(k)
         current_value  = None
@@ -173,12 +196,12 @@ class HugomaticGui(object):
     
                 
     def _get_new_values(self):
-        old_values = self.old_values
+        
         tk_vars = self.tkvars
         new_values = {} # at least we'll get some emtpy thing
         
-        for k in self.old_values.keys():
-            old_value = old_values[k]
+        for k in self.parameters_dict.keys():
+            old_value = self._get_initial_value(k)
             current_value = self._get_current_value(k)
             if(old_value != current_value):
                 new_values[k] = current_value    
@@ -203,6 +226,18 @@ class AutoScrollbar(Scrollbar):
     
 class ShowGui(HugomaticGui):
 
+    def __init__(self, title_and_desc, usage, dbg_callback, picture_path, history, parameters_dict):
+        HugomaticGui.__init__(self)
+        self.parameters_dict = parameters_dict
+        self.title_and_desc = title_and_desc
+        self.usage = usage
+        self.dbg_callback = dbg_callback
+        self.picture_path = picture_path
+        self.history = history
+    
+    def _get_initial_value(self, param):
+        return self.parameters_dict[param]['value']
+        
     def _init_gui(self):
         self.tkvars = {}
         self.tkwidgets = {}
@@ -266,8 +301,8 @@ class ShowGui(HugomaticGui):
                 initial_value = -5552
                 new_color = "red"
             else:
-                default = self.default_values[param]
-                initial_value = self.old_values[param]
+                default = self.parameters_dict[param]['default']
+                initial_value = self.parameters_dict[param]['value']
                 try:
                     current = self._get_current_value(param)
                 except:
@@ -292,15 +327,69 @@ class ShowGui(HugomaticGui):
     def _var_w_callback(self, param, *args):
         self.__gui_bg_color_update()     
         
+    def __create_tooltip(self, widget, param):
         
+        tt_text  = "variable: " + param 
+        tt_text += "\n"
+        tt_text += "default: "+str(self.parameters_dict[param]['default'])
+        attributes = self.parameters_dict[param]
+        if attributes.has_key('group'):
+            group = attributes['group']
+            tt_text += "\n"
+            tt_text += "group: " + str(group)
         
-    def _fill_tk_frame(self, tk_frame, values, picture_path, with_debug_line, titles, choices, file_paths, usage, history):
+        createToolTip(widget, tt_text)  
+    
+    def _create_debug_line_widget(self, g, row, entry_col,label_col):
+        v = -1
+        title_str = "Debug line (-1 = not set)"
+        entry = Entry(g)
+        entry.insert(0,v)
+        entry.grid(row=row, column=entry_col, sticky=E+W)
+        debug_label = Label(g, text= title_str)
+        debug_label.grid(row=row, column=label_col , sticky=W)
+        dbg_str = str(self.dbg_callback)
+        createToolTip(debug_label, "Invokes a script method before the program\nprints the specified line\ncall_back: %s" % (dbg_str) ) 
+        self.tkvars["_debug_line_"] = entry
+        self.tkwidgets["_debug_line_"] = entry
+    
+    def _create_check_box(self,tk_frame,param,row,col):
+        v = self.parameters_dict[param]['value']
+        title = self.parameters_dict[param]['title']
+        var = IntVar(name=param)
+        check_box = Checkbutton(tk_frame, justify= LEFT, text=title, variable = var)
+        self.__create_tooltip(check_box, param)
+        check_box.grid(row=row, column = col, columnspan=2, sticky=N+W)
+        self.tkvars[param] =  var
+        self.tkwidgets[param] = check_box
+        var.trace("w", self._var_w_callback)
+        var.set(v) # callback must be registered and tkvars must be set
+    
+    def _create_option_menu(self,g, param, row, entry_col, label_col):
+        choices = self.parameters_dict[param]['choices']
+        title = self.parameters_dict[param]['title']
+        v = self.parameters_dict[param]['value']
+        
+        myLabel = Label(g, text= title)
+        var = StringVar(name = param)
+        # * because OptionMenu is a variable argument list
+        menu = choices
+        opt = OptionMenu(g, var, *menu)  
+        var.trace("w", self._var_w_callback)
+        var.set(v) # callback must be registered and tkvars must be set
+        opt.grid( column = entry_col, columnspan=1, row=row, sticky=E+W)#N+W
+        myLabel.grid  (row=row, column= label_col, columnspan = 1, sticky= W) #N+W+E
+        self.__create_tooltip(myLabel, param)
+        self.tkvars[param] =  var
+        self.tkwidgets[param] = opt
+        
+    def _fill_tk_frame(self, tk_frame):
         """
         Adds all the widgets on the screen using a grid layout (necessary for scroll)
         """
         g = tk_frame
         # master = f
-        keys = values.keys()
+        keys = self.parameters_dict.keys()
         item_count = len(keys)
         
         # column numbers
@@ -309,67 +398,45 @@ class ShowGui(HugomaticGui):
         COL_LABEL = 2
 
         bitmap_rowspan = item_count
-        if with_debug_line:
+        if self.dbg_callback:
             bitmap_rowspan += 1
+            
 
         # the pict reference must be store to avoid garbage collection
-        self.pict = self._add_picture(tk_frame, picture_path, COL_IMG, bitmap_rowspan)
+        self.pict = self._add_picture(tk_frame, self.picture_path, COL_IMG, bitmap_rowspan)
         
         # print "TITLE: %s" % title_and_desc
         entry_width = 15
         i = 0
-        if with_debug_line:    
-            v = -1
-            title = "Debug line (-1 = not set)"
-            entry = Entry(g)
-            entry.insert(0,v)
-            entry.grid(row=i, column=COL_ENTRY, sticky=E+W)
-            Label(g, text= title).grid(row=i, column=COL_LABEL , sticky=W)
-            self.tkvars["_debug_line_"] = entry
-            self.tkwidgets["_debug_line_"] = entry
+        if self.dbg_callback:    
+            self._create_debug_line_widget(tk_frame, i, COL_ENTRY, COL_LABEL)
             #g.rowconfigure(i, weight=0)
             
         for counter in range(item_count):
             i = counter
-            if with_debug_line:
+            if self.dbg_callback:
                 i +=1
                 
             k = keys[counter]
-            title = titles[k]
-            v = values[k]
+            title = self.parameters_dict[k]['title']
+            v = self.parameters_dict[k]['value']
             
             #print k
-            #print " title: %s" % title
-            #print " value: %s, [%s]" % (v,type(v))
-            #print " default: %s" % defaults[k]
-            #print " choices: %s" % choices[k]
-            #print " isFilePath: %s" % filePaths[k]
-          
             # is it a list to choose from?
-            if choices[k]:
-                myLabel = Label(g, text= title)
-                var = StringVar(name = k)
-                # * because OptionMenu is a variable argument list
-                menu = choices[k]  
-                opt = OptionMenu(g, var, *menu)  
-                self.tkvars[k] =  var
-                var.trace("w", self._var_w_callback)
-                var.set(v) # callback must be registered and tkvars must be set
-                opt.grid( column = COL_ENTRY, columnspan=1, row=i, sticky=E+W)#N+W
-                myLabel.grid  (row=i, column= COL_LABEL, columnspan = 1, sticky= W) #N+W+E
-                
+            
+            if self.parameters_dict[k].has_key('choices'):
+                self._create_option_menu(tk_frame, k, i, COL_ENTRY, COL_LABEL,)
             else:    
                 type_of_value = type(v)
                 if type_of_value == bool:
-                    var = IntVar(name=k)
-                    check_box = Checkbutton(g, justify= LEFT, text=title, variable = var)
-                    createToolTip(check_box, "variable: " + k+"\ndefault: "+str(self.default_values[k]))
-                    check_box.grid(row=i, column = COL_ENTRY, columnspan=2, sticky=N+W)
-                    self.tkvars[k] =  var
-                    self.tkwidgets[k] = check_box
-                    var.trace("w", self._var_w_callback)
-                    var.set(v) # callback must be registered and tkvars must be set
+                    self._create_check_box(tk_frame,k,i,COL_ENTRY)
+                    
                 else:
+                    if self.parameters_dict[k].has_key('filePath'):
+                        pass
+                    else:
+                        pass
+                    
                     group = g
                     #group = LabelFrame(g, text="Group", padx=5, pady=5)
                     #group.pack(padx=10, pady=10)
@@ -379,8 +446,9 @@ class ShowGui(HugomaticGui):
                     self.tkwidgets[k] = entry
                     
                     myLabel = myLabel = Label(group, text= title)
-                    createToolTip(myLabel, "variable: " + k+"\ndefault: "+str(self.default_values[k]))
-                    if file_paths[k]:
+                    self.__create_tooltip(myLabel, k)
+                    
+                    if self.parameters_dict[k].has_key('filePath'):
                         bt = None
                         #lambda: self._file_path_pressed(k)
                         #bck = FilePickerCallback(entry)
@@ -389,11 +457,9 @@ class ShowGui(HugomaticGui):
                         myLabel.grid  (row=i, column= COL_LABEL, columnspan= 1, sticky= W) #N+W+E
                         bt.grid  (row=i, column= COL_ENTRY, columnspan= 1, sticky= E)
                     else:
-                        
                         myLabel.grid  (row=i, column= COL_LABEL, columnspan= 1, sticky= W) #N+W+E
                     entry.insert(0, v)
-                    entry.grid( column = COL_ENTRY, columnspan=1, row=i, sticky=E+W)#N+W
-                                     
+                    entry.grid( column = COL_ENTRY, columnspan=1, row=i, sticky=E+W)#N+W  
                     g.rowconfigure(i, weight=0)  
           
         row_count = i      
@@ -415,8 +481,11 @@ class ShowGui(HugomaticGui):
         
         # history select box
         choices = []
-        for ev in history:
-            choices.insert(0, ev[0])
+        counter = 0
+        for ev in self.history:
+            counter += 1
+            s = "[%s] %s" % (counter, str(ev[0]) )  
+            choices.insert(0, s)
         choices = tuple(choices)
         self.history_var = StringVar()
         empty = len(choices) == 0
@@ -440,14 +509,14 @@ class ShowGui(HugomaticGui):
         g.columnconfigure( 2, weight = 1 )  
         g.grid_columnconfigure(2, weight=1)        
 
-    def show(self, title_and_desc, values, titles, defaults, choices, filePaths, usage, withDebugLine, picture_path, history ):
-
-        self.with_debug_line =  withDebugLine       
-        self.old_values = values
-        self.default_values = defaults
-        self.history = history
-
-        self.tk.title(title_and_desc)
+    def show(self ):
+        
+        #title_and_desc = self.title_and_desc 
+        #values, titles, defaults, choices, filePaths, 
+        #usage, withDebugLine, picture_path, 
+        
+        window_title = self.title_and_desc # + " [%s]" % len(self.history)
+        self.tk.title(window_title)
 
         root = self.tk   
         vscrollbar = None
@@ -471,7 +540,7 @@ class ShowGui(HugomaticGui):
         # create canvas contents
         frame = Frame(canvas)
         
-        self._fill_tk_frame(frame, values, picture_path, withDebugLine, titles, choices, filePaths, usage, history)
+        self._fill_tk_frame(frame)
 
         canvas.create_window(0, 0, anchor=NW, window=frame)
         frame.update_idletasks()
@@ -481,8 +550,7 @@ class ShowGui(HugomaticGui):
         dim_str = "%sx%s" % (scrollregion[2]+25, scrollregion[3] + 5 )    
         self.tk.geometry(dim_str)
         
-        frame.bind("<Return>", self._ok_pressed)
+        #frame.bind("<Return>", self._ok_pressed)
 
-        
         root.mainloop()    
 
