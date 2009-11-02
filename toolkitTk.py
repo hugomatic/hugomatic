@@ -20,9 +20,6 @@
 # hugo@hugomatic.ca
 #
 import os
-
-
-
 from Tkinter import * 
 from tkFileDialog   import askopenfilename 
 
@@ -30,20 +27,78 @@ from tkFileDialog   import askopenfilename
 def show_params_gui( title_and_desc, values, titles, defaults, choices, filePaths, usage, withDebugLine, picture_path, history ):
     gui = ShowGui()
     gui.show( title_and_desc, values, titles, defaults, choices, filePaths, usage, withDebugLine, picture_path, history )   
-    return gui.ok_btn_pressed, gui.clear_btn_pressed, gui.debug_line, gui.return_vals
+    dbg_line = gui.debug_line
+    clear = gui.clear_btn_pressed
+    ok_pressed = gui.ok_btn_pressed
+    vals = gui.return_vals
+    return ok_pressed, clear, dbg_line, vals
 
 
-class FilePickerCallback(object):
-    def __init__(self, name, tkvars):
-        self.name = name
-        self.tkvars = tkvars
-        
-    def boom(self):
-        str  = askopenfilename() 
-        if str != ():
-            entry = self.tkvars[self.name]
-            entry.delete(0, END)
-            entry.insert(0, str) 
+from Tkinter import *
+
+class ToolTip(object):
+
+    def __init__(self, widget):
+        self.widget = widget
+        self.tipwindow = None
+        self.id = None
+        self.x = self.y = 0
+
+    def showtip(self, text):
+        "Display text in tooltip window"
+        self.text = text
+        if self.tipwindow or not self.text:
+            return
+        x, y, cx, cy = self.widget.bbox("insert")
+        x = x + self.widget.winfo_rootx() + 27
+        y = y + cy + self.widget.winfo_rooty() +27
+        self.tipwindow = tw = Toplevel(self.widget)
+        tw.wm_overrideredirect(1)
+        tw.wm_geometry("+%d+%d" % (x, y))
+        try:
+            # For Mac OS
+            tw.tk.call("::tk::unsupported::MacWindowStyle",
+                       "style", tw._w,
+                       "help", "noActivates")
+        except TclError:
+            pass
+        label = Label(tw, text=self.text, justify=LEFT,
+                      background="#ffffe0", relief=SOLID, borderwidth=1)
+                      #font=("tahoma", "8", "normal"))
+        label.pack(ipadx=1)
+
+    def hidetip(self):
+        tw = self.tipwindow
+        self.tipwindow = None
+        if tw:
+            tw.destroy()
+
+def createToolTip(widget, text):
+    toolTip = ToolTip(widget)
+    def enter(event):
+        toolTip.showtip(text)
+    def leave(event):
+        toolTip.hidetip()
+    widget.bind('<Enter>', enter)
+    widget.bind('<Leave>', leave)
+
+class Command:
+    def __init__(self, callback, *args, **kwargs):
+        self.callback = callback
+        self.args = args
+        self.kwargs = kwargs
+
+    def __call__(self):
+        return self.callback(*self.args, **self.kwargs)
+
+def file_picker_callback(entry):
+    str  = askopenfilename() 
+    if str != ():
+        entry.delete(0, END)
+        entry.insert(0, str) 
+
+
+
 
 
 class HugomaticGui(object): 
@@ -90,10 +145,33 @@ class HugomaticGui(object):
         self.ok_btn_pressed = True
         if self.with_debug_line:
             s = self._get_widget_value_as_string('_debug_line_')
-            self.debugLine = int( s)
+            self.debug_line = int( s)
         self.return_vals = self._get_new_values()
         self._quit_gui()
+    
+    def _get_current_value(self, k):
+        old_value = self.old_values[k]
+        old_type = type(old_value)  
+        user_value_string = self._get_widget_value_as_string(k)
+        current_value  = None
+        if old_type == int:
+            current_value = int(user_value_string)
+        elif old_type == float:
+            current_value = float(user_value_string)
+        elif old_type == str:
+            current_value = str(user_value_string)
+        elif old_type == bool:
+            new_bool = True
+            if user_value_string == '0':
+                new_bool = False
+            #print "BOOOOL", user_value_string, new_bool
+            current_value = new_bool
             
+        elif current_value == None:
+            current_value = user_value_string
+        return current_value
+    
+                
     def _get_new_values(self):
         old_values = self.old_values
         tk_vars = self.tkvars
@@ -101,25 +179,7 @@ class HugomaticGui(object):
         
         for k in self.old_values.keys():
             old_value = old_values[k]
-            old_type = type(old_value)
-            user_value_string = self._get_widget_value_as_string(k)
-            current_value  = None
-                       
-            if old_type == int:
-                current_value = int(user_value_string)
-            elif old_type == float:
-                current_value = float(user_value_string)
-            elif old_type == str:
-                current_value = str(user_value_string)
-            elif old_type == bool:
-                new_bool = True
-                if user_value_string == '0':
-                    new_bool = False
-                #print "BOOOOL", user_value_string, new_bool
-                current_value = new_bool
-                
-            elif current_value == None:
-                current_value = user_value_string         
+            current_value = self._get_current_value(k)
             if(old_value != current_value):
                 new_values[k] = current_value    
         return new_values
@@ -145,7 +205,13 @@ class ShowGui(HugomaticGui):
 
     def _init_gui(self):
         self.tkvars = {}
+        self.tkwidgets = {}
         self.tk = Tk()
+
+        self.default_value_color = self.tk.cget("bg")
+        self.initial_value_color = "#%02x%02x%02x" % (128, 192, 200) #"blue"
+        self.new_value_color = "#%02x%02x%02x" % (112, 171, 206) #"red"
+        
 
     def _quit_gui(self):
         self.tk.quit()
@@ -188,7 +254,50 @@ class ShowGui(HugomaticGui):
                 tk_frame.columnconfigure( column, weight = 1 )
         return pict    
 
+    def __gui_bg_color_update(self):
+        for param, widget in self.tkwidgets.iteritems(): 
+            new_color = self.new_value_color
+            default = None
+            current = None
+            initial_value = None
+            if param == '_debug_line_':
+                default = -1
+                current = int(widget.get())
+                initial_value = -5552
+                new_color = "red"
+            else:
+                default = self.default_values[param]
+                initial_value = self.old_values[param]
+                try:
+                    current = self._get_current_value(param)
+                except:
+                    continue
+               
+            if current == default:
+                #print param, "D default: ", default, ", initial:", initial_value, ", current:",current
+                widget.config(bg=self.default_value_color)
+            else: 
+                if current == initial_value:
+                    #print param, "I default: ", default, ", initial:", initial_value, ", current:",current
+                    widget.config(bg=self.initial_value_color)
+                else:
+                    #print param, "N default: ", default, ", initial:", initial_value, ", current:",current
+                    widget.config(bg=new_color)
+        
+        
+    def _entry_validation_callback(self, param):
+        self.__gui_bg_color_update()
+        return True
+    
+    def _var_w_callback(self, param, *args):
+        self.__gui_bg_color_update()     
+        
+        
+        
     def _fill_tk_frame(self, tk_frame, values, picture_path, with_debug_line, titles, choices, file_paths, usage, history):
+        """
+        Adds all the widgets on the screen using a grid layout (necessary for scroll)
+        """
         g = tk_frame
         # master = f
         keys = values.keys()
@@ -217,6 +326,7 @@ class ShowGui(HugomaticGui):
             entry.grid(row=i, column=COL_ENTRY, sticky=E+W)
             Label(g, text= title).grid(row=i, column=COL_LABEL , sticky=W)
             self.tkvars["_debug_line_"] = entry
+            self.tkwidgets["_debug_line_"] = entry
             #g.rowconfigure(i, weight=0)
             
         for counter in range(item_count):
@@ -238,57 +348,67 @@ class ShowGui(HugomaticGui):
             # is it a list to choose from?
             if choices[k]:
                 myLabel = Label(g, text= title)
-                var = StringVar()
-                # * because OptionMenu is a variable argument list  
-                opt = OptionMenu(g, var, *choices)  
-                var.set(v)
+                var = StringVar(name = k)
+                # * because OptionMenu is a variable argument list
+                menu = choices[k]  
+                opt = OptionMenu(g, var, *menu)  
                 self.tkvars[k] =  var
+                var.trace("w", self._var_w_callback)
+                var.set(v) # callback must be registered and tkvars must be set
                 opt.grid( column = COL_ENTRY, columnspan=1, row=i, sticky=E+W)#N+W
                 myLabel.grid  (row=i, column= COL_LABEL, columnspan = 1, sticky= W) #N+W+E
-        
+                
             else:    
                 type_of_value = type(v)
                 if type_of_value == bool:
-                    var = IntVar()
-                    var.set(v)
-                    checkBox = Checkbutton(g, justify= LEFT, text=title, variable = var)
-                    checkBox.grid(row=i, column = COL_ENTRY, columnspan=2, sticky=N+W)
+                    var = IntVar(name=k)
+                    check_box = Checkbutton(g, justify= LEFT, text=title, variable = var)
+                    createToolTip(check_box, "variable: " + k+"\ndefault: "+str(self.default_values[k]))
+                    check_box.grid(row=i, column = COL_ENTRY, columnspan=2, sticky=N+W)
                     self.tkvars[k] =  var
+                    self.tkwidgets[k] = check_box
+                    var.trace("w", self._var_w_callback)
+                    var.set(v) # callback must be registered and tkvars must be set
                 else:
                     group = g
                     #group = LabelFrame(g, text="Group", padx=5, pady=5)
                     #group.pack(padx=10, pady=10)
                     
-                    entry = Entry(group)
+                    entry = Entry(group,validate = "all", validatecommand=Command(self._entry_validation_callback,k)) # Command(text_changed_callback, self, k) 
                     self.tkvars[k] =  entry
-                    myLabel = None
+                    self.tkwidgets[k] = entry
+                    
+                    myLabel = myLabel = Label(group, text= title)
+                    createToolTip(myLabel, "variable: " + k+"\ndefault: "+str(self.default_values[k]))
                     if file_paths[k]:
                         bt = None
                         #lambda: self._file_path_pressed(k)
-                        bck = FilePickerCallback(k, self.tkvars)
-                        bt = Button(group, text= "...", command = bck.boom)
-                        myLabel = Label(group, text= title)
+                        #bck = FilePickerCallback(entry)
+                        bt = Button(group, text= "...", command = Command(file_picker_callback,entry))
+                        
                         myLabel.grid  (row=i, column= COL_LABEL, columnspan= 1, sticky= W) #N+W+E
                         bt.grid  (row=i, column= COL_ENTRY, columnspan= 1, sticky= E)
                     else:
-                        myLabel = Label(group, text= title)
+                        
                         myLabel.grid  (row=i, column= COL_LABEL, columnspan= 1, sticky= W) #N+W+E
                     entry.insert(0, v)
                     entry.grid( column = COL_ENTRY, columnspan=1, row=i, sticky=E+W)#N+W
                                      
                     g.rowconfigure(i, weight=0)  
-                
+          
+        row_count = i      
         # cmd line
-        row_count = i + 1
-        text_cmd = Text( g, width = 3, height = 4 )
-        text_cmd.grid( row = row_count, column = 0, columnspan = 3, sticky = W+E+N+S)
-        g.grid_rowconfigure( row_count, weight = 1 )
-        text_cmd.insert( INSERT, usage )
-        text_cmd.config(state=DISABLED) # (state=NORMAL)
+#        row_count += 1
+#        text_cmd = Text( g, width = 3, height = 4 )
+#        text_cmd.grid( row = row_count, column = 0, columnspan = 3, sticky = W+E+N+S)
+#        g.grid_rowconfigure( row_count, weight = 1 )
+#        text_cmd.insert( INSERT, usage )
+#        text_cmd.config(state=DISABLED) # (state=NORMAL)
         
         # button bar
         row_count += 1
         self.button_clear = Button( g, text = "Clear list", command = self._clear_pressed )
+        
         self.button_clear.grid( row = row_count, column = 1, sticky = W+E+S )
         buttonDefault = Button( g, text = "Default values", command = self._default_pressed )
         buttonDefault.grid( row = row_count, column = 2, sticky = W+E+S )
@@ -326,7 +446,6 @@ class ShowGui(HugomaticGui):
         self.old_values = values
         self.default_values = defaults
         self.history = history
-      
 
         self.tk.title(title_and_desc)
 
@@ -361,6 +480,9 @@ class ShowGui(HugomaticGui):
         
         dim_str = "%sx%s" % (scrollregion[2]+25, scrollregion[3] + 5 )    
         self.tk.geometry(dim_str)
+        
+        frame.bind("<Return>", self._ok_pressed)
+
         
         root.mainloop()    
 
