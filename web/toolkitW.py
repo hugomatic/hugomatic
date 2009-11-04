@@ -446,13 +446,27 @@ function OnButtonDownload()
         print "( " + self.title + " )"
         print "( " + self.desc + " )"
         print
+    
+    def  _inject_form_values_into_global_vars(self, form):
         
-        callingFrame = inspect.currentframe().f_back.f_back
+        import inspect
+        import sys, traceback
+    
+        f = open('toto.txt','w')
+        traceback.print_stack( file = f)
+        
+        
+        callingFrame = inspect.currentframe().f_back.f_back.f_back
+        
+        f.close()    
+        
         for p in self.params:
+            
             name = p['name'] 
             desc = p['desc']
             value = p['obj']
-
+            
+            print "COCONUT", name 
             
             newVal = None
             if type(value) == bool:
@@ -478,11 +492,14 @@ function OnButtonDownload()
             strV =  name + " = " + str(newVal) + ", "+ desc+ " default: "+ str(value)
             s2 = "( " + gcodeCommentEscape(strV) + ")"
             print s2
+        
     
     def _printPost(self):
         name = os.path.basename(self.fileName)
         output_file = name.replace(".py",".ngc")
         form = cgi.FieldStorage()       
+        
+        self._inject_form_values_into_global_vars(form)
         
         if form['generation'].value == 'interactive':
             self._interactive_post(name, output_file, form)
