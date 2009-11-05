@@ -452,13 +452,10 @@ function OnButtonDownload()
         import inspect
         import sys, traceback
     
-        f = open('toto.txt','w')
-        traceback.print_stack( file = f)
-        
-        
+        # f = open('toto.txt','w')
+        # traceback.print_stack( file = f)
         callingFrame = inspect.currentframe().f_back.f_back.f_back
-        
-        f.close()    
+        # f.close()    
         
         for p in self.params:
             
