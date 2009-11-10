@@ -29,12 +29,10 @@ import os # path split
 import operator
 import datetime
 import re
-
+import sys, traceback
 
 
 def print_debug_info():
-    import inspect
-    import sys, traceback
     
     traceback.print_stack( file = sys.stdout)    
     
