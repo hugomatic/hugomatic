@@ -6,8 +6,10 @@ import re
       
 class Gcode2Params(object):
     
-    def __init__(self, state = {}):
+    def __init__(self, title, params, state = {}, ):
         self.line_nb = 0
+        self.title = title
+        self.params = params
         self.state = {'x':0.,
                     'y':0., 
                     'z':0., 
@@ -19,13 +21,13 @@ class Gcode2Params(object):
                     'stock_x0':0.,
                     'stock_y0':0.,
                     'stock_dz':-1.}
+        
         self.state.update(state)
         self.floating_point_regex = re.compile('[-+]?[0-9]*\.?[0-9]+')
         self.gcode_params = []
         self.min_max = {'x':[self.state['x'],self.state['x']],
                         'y':[self.state['y'],self.state['y']],
                         'z':[self.state['z'],self.state['z']], }
-    
     
     def __collect_extra_params(self, line, params):
         # put them in the state

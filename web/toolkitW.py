@@ -39,6 +39,7 @@ try:
     import google.appengine
     import imp
     import hugomatic.web.gcode2svg as gcode2svg
+    import hugomatic.web.gcode2json as gcode2json
     
     googleAppEngine = True
     
@@ -47,7 +48,7 @@ try:
     imp.get_suffixes = get_suffixes
 except:
     import gcode2svg
-
+    import gcode2json
 
 
 def print_stack_info():
@@ -70,49 +71,68 @@ def print_interactive_post_footer():
     utils.printFooter()
     print "</body></html>"
 
-svg_document = None
+# svg_document = None
     
-def print_svg_post_footer(stdout1 = None, svg1 = None):
-    svg = svg1
-    if svg1 == None:
-        svg = sys.stdout.svg
+def print_params_post_footer(stdout1 = None, xform = None):
+    form = xform
+    if form == None:
+        form = sys.stdout.xform
     stdout = stdout1
     if stdout == None:
         sys.stdout = sys.stdout.out
     else:
         sys.stdout = stdout
 
-    import traceback
-    traceback.print_stack()
+    text = form.get_document()
+    print text
 
-    svg_text = svg.get_svg_document()
-    print svg_text
+
+
+class ParamsRedirectStdOut:
     
-class SvgRedirectStdOut:
-    
-    def __init__(self, out):    
+    def __init__(self, out, xform):    
         self.out = out
-        self.svg = gcode2svg.Gcode2Svg()
-        svg_document = self.svg
+        self.xform = xform
+        self.tmp = ""
         
-    def writeline(self, line):
-        self.svg.add_gcode_line(line)
+    def _writeline(self, line):
+        self.xform.add_gcode_line(line)
         ll = line.lower()
         if googleAppEngine:
-            # end of document
             if ll.split('(')[0].find("m2") != -1 :
-                print_svg_post_footer(self.out, self.svg)
+                print_params_post_footer(self.out, self.xform)
+    
+    def write1(self, s):
+        lines = s.splitlines()
+        if len(lines) > 1:
+            for l in lines:
+                self._writeline(l)
+                # self._writeline('\n')
+        else:
+            self._writeline(s)
+                    
+    def write(self, s):
+        self.write2(s)
         
-    def write(self, s): 
-         lines = s.splitlines()
-         if len(lines) > 1:
-             for l in lines:
-                 self.writeline(l + '\n')
-         else:
-             self.writeline(s)
-    
-    
-
+    def write2(self,s):
+        lines = s.splitlines()
+        if len(lines) > 1:
+            for l in lines:
+                self._writeline(self.tmp +l)
+                self.tmp = ''
+        if s.endswith("\n"):
+            self._writeline(self.tmp + s[:-1])
+            self.tmp = ""
+        else:    
+            self.tmp += s
+#        
+#        if len(lines) > 1:
+#            for l in lines:
+#                self._writeline(l + '\n')
+#        else:
+#            self._writeline(s)
+#                
+ 
 class RedirectStdOut:
     
     isComment = False
@@ -124,7 +144,7 @@ class RedirectStdOut:
         self.prettyPrint = pretty
         self.printLineCounter = 0
         if self.prettyPrint:
-             self.prettyWrite('\n')
+            self.prettyWrite('\n')
     
     def _prettyGcode(self,s):
         def prettyChar(c):
@@ -140,7 +160,7 @@ class RedirectStdOut:
             if c in 'aAXxYyZzIiJjpPrR':
                 pre = ""
                 if self.isToken:
-                   pre = "</b>"
+                    pre = "</b>"
                 return pre + "<font color=darkblue>" + c+ "</font>"
             if  c== 'F' or c == 'f':
                 return "<b>" + c + "</b>"
@@ -168,7 +188,7 @@ class RedirectStdOut:
             return val
         
         def get_html_file_link(name, root, lineNb): 
-            (p,f) = os.path.split(name)
+            f = os.path.split(name)[1]
             if name.startswith(root):
                 i = len(root)
                 f =  name[i+1:] # +1 removes the '/' in front
@@ -264,8 +284,6 @@ class RedirectStdOut:
             print_func_name(file_name, currentDir, py_line_number, func_name)
             print_snippet(snippet_lines, snippet_current_line_nb)
             print_variables(gcode_line_number, locals_dict, globals_dict)
-            
-                   
         self.out.write("</div>")
         
     def prettyWrite(self, s):
@@ -300,13 +318,13 @@ class RedirectStdOut:
         if self.prettyPrint == False:
             self.out.write(s)
         else:
-             lines = s.splitlines()
-             if len(lines) > 1:
-                 for l in lines:
-                     self.prettyWrite(l)
-                     self.prettyWrite('\n')
-             else:
-                 self.prettyWrite(s)
+            lines = s.splitlines()
+            if len(lines) > 1:
+                for l in lines:
+                    self.prettyWrite(l)
+                    self.prettyWrite('\n')
+            else:
+                self.prettyWrite(s)
 
 
 
@@ -351,6 +369,14 @@ function OnButtonPreview()
 {
 
     document.GcodeForm.generation.value = "interactive"
+    document.GcodeForm.submit();             // Submit the page
+
+    return true;
+}
+
+function OnButtonCanvas()
+{
+    document.GcodeForm.generation.value = "canvas"
     document.GcodeForm.submit();             // Submit the page
 
     return true;
@@ -409,35 +435,44 @@ function OnButtonDownload()
         return fn
     
     def _interactive_post(self, name, output_file, form):
-         print "Content-Type: text/html"
-         print
-         html_header = self.postHead
-         # add the tree control javascript stuff
-         #html_header += HtmlTree.html_header_text
-         utils.printHead('Hugomatic gcode', ('banner','nav','interactive','footer'),  extraText=html_header)
-         utils.printBanner()
-         utils.printPostNavBar(self.fileName)
-         print "<h1>" + output_file + "</h1><Pre>"
-         #print '<h2>Source code: <a href="sourceView.py?src=' + name + '">' + name+'</a></h2>'
-         old_out = sys.stdout
-         sys.stdout = RedirectStdOut(old_out, True)
-         # add hook to end program with a copyright notice
-         if googleAppEngine == False:
-             atexit.register(print_interactive_post_footer)
+        print "Content-Type: text/html"
+        print
+        html_header = self.postHead
+        # add the tree control javascript stuff
+        #html_header += HtmlTree.html_header_text
+        utils.printHead('Hugomatic gcode', ('banner','nav','interactive','footer'),  extraText=html_header)
+        utils.printBanner()
+        utils.printPostNavBar(self.fileName)
+        print "<h1>" + output_file + "</h1><Pre>"
+        #print '<h2>Source code: <a href="sourceView.py?src=' + name + '">' + name+'</a></h2>'
+        old_out = sys.stdout
+        sys.stdout = RedirectStdOut(old_out, True)
+        # add hook to end program with a copyright notice
+        if googleAppEngine == False:
+            atexit.register(print_interactive_post_footer)
 
-    def _svg_post(self, name, output_file, form):
+
+    def _svg_post(self, name, output_file, form, values_dict):
         #print 'Content-Type: text/plain'
         print  "Content-Type: image/svg+xml"
         print
         
         
         old_out = sys.stdout
-        sys.stdout = SvgRedirectStdOut(old_out)
-         # add hook to end program with an svg text
+        sys.stdout = ParamsRedirectStdOut(old_out, gcode2svg.Gcode2Svg(output_file, values_dict)  )
+        # add hook to end program with an svg text
         if googleAppEngine == False: 
-            atexit.register(print_svg_post_footer)
-
+            atexit.register(print_params_post_footer)
     
+    def _canvas_post(self, name, output_file, form, values_dict):
+        print  "Content-Type: text/html"
+        print
+        
+        old_out = sys.stdout
+        sys.stdout = ParamsRedirectStdOut(old_out, gcode2json.Gcode2json(output_file, values_dict) )
+        if googleAppEngine == False: 
+            atexit.register(print_params_post_footer)
+   
     def _download_post(self, name, output_file, form):
         print 'Content-Type: text/plain'
         print "Content-Disposition: attachment; filename=\"" + output_file + "\""
@@ -489,21 +524,19 @@ function OnButtonDownload()
         form = cgi.FieldStorage()       
         callingFrame = inspect.currentframe().f_back.f_back
         self._inject_form_values_into_global_vars(form, callingFrame)
-        
+        new_values = {}
+        for p in self.params:
+            name = p['name']
+            new_values[name] = callingFrame.f_globals[name]
+            
         if form['generation'].value == 'interactive':
             self._interactive_post(name, output_file, form)
         if form['generation'].value == 'download':
-            #for p in self.params:
-            #    name = p['name']
-            #    desc = p['desc']
-            #    default = p['obj']
-            #    new_val = callingFrame.f_globals[name]
-            #    s =  name + " = " + str(new_val) + ", "+ desc+ " default: "+ str(default)
-            #    s2 = "( " + gcodeCommentEscape(s) + ")"
-            #    print s2
             self._download_post(name, output_file, form)
         if form['generation'].value == 'svg':
-            self._svg_post(name, output_file, form)
+            self._svg_post(name, output_file, form, new_values)
+        if form['generation'].value == 'canvas':
+            self._canvas_post(name, output_file, form, new_values)
                    
             
         
@@ -598,9 +631,10 @@ function OnButtonDownload()
         print """
         
     <input type="hidden" name="generation" value="none" />        
-<br><INPUT type="button" value="Generate with UI" name=button1 onclick="return OnButtonPreview();">
+<br><INPUT type="button" value="Web view" name=button1 onclick="return OnButtonPreview();">
     <INPUT type="button" value="Generate & download" name=button2 onclick="return OnButtonDownload();">
-    <INPUT type="button" value="SVG preview (BETA)" name=button3 onclick="return OnButtonSvg();">
+    <INPUT type="button" value="SVG (BETA)" name=button3 onclick="return OnButtonSvg();">
+    <INPUT type="button" value="UI (BETA)" name=button3 onclick="return OnButtonCanvas();">
     <input value="RESET" type="reset"> 
     
              </fieldset>

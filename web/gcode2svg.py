@@ -5,12 +5,12 @@ import sys
 #import re
 
 import gcode2params
-
 import json as json
+
 class Gcode2Svg(gcode2params.Gcode2Params):
-    def __init__(self):
+    def __init__(self, title, params):
         state = {'svg_scaling':100.0}
-        gcode2params.Gcode2Params.__init__(self,state)
+        gcode2params.Gcode2Params.__init__(self, title, params, state )
             
     def __get_svg_path(self, line_nb, params, state):
     
@@ -161,7 +161,7 @@ class Gcode2Svg(gcode2params.Gcode2Params):
             lines.append(path)     
         return "\n".join(lines)
       
-    def get_svg_document(self):
+    def get_document(self):
         svg_text = []
         svg_text.append(self._get_svg_header())
         for  g_parameters in self.gcode_params:
@@ -171,9 +171,19 @@ class Gcode2Svg(gcode2params.Gcode2Params):
         svg_text.append(footer)
         return "\n".join(svg_text)
 
+def get_lines_from_file(name):
+    f = None
+    lines = None
+    try:    
+        f = open(name) 
+        lines = f.readlines()
+    finally:
+        f.close()
+    return lines
+
 if __name__ == "__main__":
     lines = get_lines_from_file(sys.argv[1])
-    svg_translator = Gcode2Svg()
+    svg_translator = Gcode2Svg(name,{})
     for line in lines:
         svg_translator.add_gcode_line(line)
     print svg_translator.get_svg_document()
