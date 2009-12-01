@@ -70,12 +70,8 @@ td
 }
 
 </style>
-  <link type="text/css" rel="stylesheet" href="hugomatic/web/stylesheets/banner.css" />
-  <link type="text/css" rel="stylesheet" href="hugomatic/web/stylesheets/nav.css" />
-  <link type="text/css" rel="stylesheet" href="hugomatic/web/stylesheets/interactive.css" />
-  <link type="text/css" rel="stylesheet" href="hugomatic/web/stylesheets/footer.css" />
 
-    <script type="text/javascript">
+<script type="text/javascript">
     """
         lines.append(s1)
 
