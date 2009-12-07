@@ -380,6 +380,7 @@ def stock(x0, y0,  dx, dy, z0, z1):
     print "(blank)"
     print "(hugomatic['stock_x0']= %.4f)" % (x0)
     print "(hugomatic['stock_y0']= %.4f)" % (y0)
+    print "(hugomatic['stock_z0']= %.4f)" % (z0)
     print "(hugomatic['stock_h'] = %.4f)" % (dy)
     print "(hugomatic['stock_w'] = %.4f)" % (dx)
     print "(hugomatic['stock_dz'] = %.4f)" % (dz)

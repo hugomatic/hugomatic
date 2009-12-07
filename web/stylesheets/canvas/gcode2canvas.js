@@ -53,20 +53,16 @@ function format_hugomatics(gcode)
 }
 
 function format_gcode_info(gcode)
-{
-    
+{  
     var s = "<ul>"
-
     s += "<li>Nb of lines = ";
     s += gcode.line_count + "</li>";
-
     var dx = gcode.gcode_min_max.x[1] - gcode.gcode_min_max.x[0];
     var dy = gcode.gcode_min_max.y[1] - gcode.gcode_min_max.y[0];
     var dz = gcode.gcode_min_max.z[0] - gcode.gcode_min_max.z[1];
     s += "<li>dX = "+dx+ " [" + gcode.gcode_min_max.x[0] + "," + gcode.gcode_min_max.x[1] + "]</li>";
     s += "<li>dY = "+dy+ " [" + gcode.gcode_min_max.y[0] + "," + gcode.gcode_min_max.y[1] + "]</li>";
     s += "<li>dZ = "+dz+ " [" + gcode.gcode_min_max.z[1] + "," + gcode.gcode_min_max.z[0] + "]</li>";
-
     s+= "</ul>";    
     return s;
 }
@@ -79,8 +75,22 @@ function draw_stock(context, scale, gcode)
     var h = gcode.hugomatics.dy_stock;
     var z = gcode.hugomatics.z0_stock;
     var dz = gcode.hugomatics.dz_stock;
+    
     if( x === undefined)
     {
+    	end_state = gcode.lines[gcode.line_count-1][3];
+    	x =  end_state['stock_x0'];
+    	y =  end_state['stock_y0'];
+    	w =  end_state['stock_w'];
+    	h =  end_state['stock_h'];
+    	z =  end_state['stock_z0'];
+    	dz =  end_state['stock_dz'];
+    }
+
+                                                 
+    if( x === undefined)
+    {
+    	x =  end_state['']
     	debug("stock origin (x0_stock) undefined");
     	return;
 	}

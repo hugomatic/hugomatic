@@ -118,7 +118,8 @@ function render()
     var y_off = 100;
     var scale = 100;
     xform = new Scale(x_off, y_off, scale);
-   
+    
+    debug('draw stock');
     draw_stock(context, xform, gcode);
     
     var arLen=gcode.lines.length;
