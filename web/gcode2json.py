@@ -50,8 +50,8 @@ class Gcode2json(gcode2params.Gcode2Params):
  .even{background-color:rgba(0,0,128,0.1); }
 table, td
 {
-    border-color: #600;
-    border-style: solid;
+  //  border-color: #600;
+  //  border-style: solid;
 }
 
 table
@@ -65,7 +65,7 @@ td
 {
     margin: 0;
     padding: 4px;
-    border-width: 1px 1px 0 0;
+    border-width: 0 0 0 0;
     background-color: lightgray; //#FFC;
 }
 

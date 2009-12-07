@@ -236,7 +236,7 @@ function draw_line(context, line_nb, scale, gcode)
     var p0 = scale.position(sx,sy,sz)    
 
     tool_dia = scale.distance(tool_dia);
-
+    
     if (g == 0)
     {
         g0(context,p0[0],p0[1],p0[2],p1[0], p1[1], p1[2]);
@@ -249,14 +249,14 @@ function draw_line(context, line_nb, scale, gcode)
     {
         var i = scale.distance(params.i);
         var j = scale.distance(params.j);
-        g2(context,tool_dia,p0[0],p0[1],p0[2],p1[0], p1[1], p1[2],i,j);
+        g2_3(context,g,tool_dia,p0[0],p0[1],p0[2],p1[0], p1[1], p1[2],i,j);
         
     }
     else if (g == 3)
     {
         var i = scale.distance(params.i);
         var j = scale.distance(params.j);
-        g3(context,tool_dia,p0[0],p0[1],p0[2],p1[0], p1[1], p1[2],i,j);
+        g2_3(context,g,tool_dia,p0[0],p0[1],p0[2],p1[0], p1[1], p1[2],i,j);
     }
     
     else if (g == 20)
@@ -288,12 +288,8 @@ function g0(context, x0,y0,z0, x1,y1,z1)
 
 function g1(context, tool_dia,  x0,y0,z0, x1,y1,z1)
 {
-
     context.lineWidth   = tool_dia;
-
     context.beginPath();
-    // scale.transform(x0,y0);
-       
     context.moveTo(x0, y0);
     context.lineTo(x1, y1);
     context.stroke();
@@ -306,33 +302,32 @@ function format_point(x,y,z)
     return "[" + x + ", " +  y + ", " + z +"]";
 }
 
-function g3(context,tool_dia, x0,y0,z0, x1,y1,z1, i,j)
+function g2_3(ctx, g, tool_dia, x0, y0, z0, x1,y1,z1, i,j,k)
 {
-//    g0(context,x0,y0,z0, x1,y1,z1);
-    var x          = x1;               // x coordinate
-    var y          = y1;               // y coordinate
+    var cx = x0 + i;
+    var cy = y0 + j;
+    var radius = Math.sqrt(i*i + j*j);
+    var s_angle = 0;
+    var e_angle = 0;
+    // full circle?
+    if( (x1 == x0) && (y1 == y0) )
+    {
+        s_angle = 0;
+        e_angle = Math.PI * 2;
+    }
+    else
+    {
+        s_angle = Math.atan2(y0 - cy, x0 - cx);
+        e_angle = Math.atan2(y1 - cy, x1 - cx);
+    }
+    var anticlock = (g == 2);
     
-    var radius     = Math.sqrt(i*i + j*j);                    // Arc radius
-    var startAngle = 0;                     // Starting point on circle
-    var endAngle   = Math.PI+(Math.PI*j)/2; // End point on circle
-    var clockwise  = i%2==0 ? false : true; // clockwise or anticlockwise
-  
-    var info =  "G3 "  + format_point(x0,y0,z0); 
-    info +=  " to " +format_point(x1,y1,z1);
-    info += " ijk " + format_point(i,j,0);
-    
-    debug(info);    
-    var cx = x0 + i; 
-    var cy = y0 + j; 
-    var circle_data = "*  center: " + format_point(cx, cy, 0) ;
-    circle_data += " radius: " + radius;
-    
-    debug(circle_data);
-    //   context.arc(x,y,radius,startAngle,endAngle, clockwise);
+    // draw using arc (x, y, radius, start angle rad, end angle, anticlockwise) 
+    ctx.lineWidth   = tool_dia;
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, s_angle, e_angle, anticlock);
+    ctx.stroke();
+    ctx.closePath();
 }
 
-function g2(context,tool_dia, x0,y0,z0, x1,y1,z1, i,j)
-{
-    g0(context,x0,y0,z0, x1,y1,z1);
-    
-}
+

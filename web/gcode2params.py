@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import unittest
 
 
 import sys
@@ -16,11 +17,7 @@ class Gcode2Params(object):
                     'f':0., 
                     'tool_dia':1, 
                     'units':'default',
-                    'stock_w':1.,
-                    'stock_h':1., 
-                    'stock_x0':0.,
-                    'stock_y0':0.,
-                    'stock_dz':-1.}
+                     }
         
         self.state.update(state)
         self.floating_point_regex = re.compile('[-+]?[0-9]*\.?[0-9]+')
@@ -63,6 +60,10 @@ class Gcode2Params(object):
         
         toks = expression.split('[')
         if len(toks) == 1:
+            f = self.__get_float_from_string(expression)
+            return f
+        # "3 x[2*0.5] 
+        if( len(toks[0].strip()) > 0):
             f = self.__get_float_from_string(expression)
             return f
         s = toks[1]
@@ -122,3 +123,19 @@ class Gcode2Params(object):
             self.state.update(params)
             self.__min_max_updates()
 
+
+
+if __name__ == "__main__":
+    p1 = 0
+    p2 = 69
+    params = Gcode2Params('title', locals())
+    params.add_gcode_line("g3 x0.5175 y0.0000 i[-1.0 * 0.1250] j0 z0.000")
+    
+    code_dict =  params.gcode_params[0][2]
+    print code_dict
+    assert(code_dict['g'] == 3.0)
+    assert(code_dict['x'] == 0.5175)
+    assert(code_dict['i'] == -0.125)
+    assert(code_dict['z'] == 0.)
+    
+    assert(params.params['p2'] == 69)
