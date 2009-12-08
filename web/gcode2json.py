@@ -144,7 +144,7 @@ function code()
     debug('render text code');
     var start_line = 0;
     var end_line = gcode.line_count-1;
-    var s = format_code(start_line, end_line,gcode)
+    var s = format_code(start_line, end_line,gcode);
     code_div = document.getElementById('code');
     code_div.innerHTML = s;
 }
