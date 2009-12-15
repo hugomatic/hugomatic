@@ -24,8 +24,8 @@ function debug_clear()
 
 function debug(msg)
 {
-    var elem = document.getElementById('debug');
-    elem.innerHTML += "<p>" + msg + "</p>";
+   // var elem = document.getElementById('debug');
+   // elem.innerHTML += "<p>" + msg + "</p>";
 }    
 
 function get_canvas_context(canvas_id)
@@ -141,7 +141,7 @@ function pad(number,length) {
 function format_line_nb(nb)
 { 
   var nb_s  = pad(nb+1, 4);
-  return '<font color="darkblue"><a class="nb" onclick="gsel('+ nb + ')">'+ nb_s + '  </a></font>';
+  return '<a class="nb" onclick="gsel('+ nb + ')">'+ nb_s + '</a>';
 }
 
 function format_gcode(text)
@@ -165,7 +165,7 @@ function format_text(line)
 
 function format_line(line_nb, class_name, gcode)
 {
-    var s = "<tr><td>";
+    var s = "<tr><td class='nb'>";
     s += format_line_nb(line_nb);
     s += "</td><td class='" +  class_name+ "'>";
     var text= gcode.lines[line_nb][1]; 
@@ -175,7 +175,7 @@ function format_line(line_nb, class_name, gcode)
 
 function format_code(start_line, end_line,gcode)
 {
-    var s = '<table><tr>' // '<table border="0" cellspacing="0" cellpadding="5"><tr>';
+    var s = '<table class="code_table"><tr>' // '<table border="0" cellspacing="0" cellpadding="5"><tr>';
     
     for ( var i=start_line; i< end_line; i++ )
     {   
@@ -280,6 +280,22 @@ function draw_line(context, line_nb, scale, gcode)
 
 }
 
+function draw_lines(context, gcode, xform, start_line, end_line)
+{
+    for ( var i=start_line; i<= end_line; ++i )
+    {   
+        var nb = gcode.lines[i][0];
+        var text= gcode.lines[i][1];    
+        try       
+        {
+            draw_line(context, i, xform, gcode);
+        }
+        catch(err)
+        {
+            debug('ERROR: render_line: ' + nb + ":" + text + " ERR: " + err.description );
+        }
+    }
+}
 
 function g0(context, x0,y0,z0, x1,y1,z1)
 {
