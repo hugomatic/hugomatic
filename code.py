@@ -572,11 +572,11 @@ def round_rectangle_tool_inside(x0, y0, x1, y1, radius, z_safe, z_surf,  tool_di
     """
     _RoundRectOffset(x0, y0, x1, y1, radius, z_safe, z_surf,  tool_dia, cuts, -0.5 * tool_dia)
 
-def round_rectangle_tool_outside(x0, y0, x1, y1, radius, z_safe, z_surf,  tool_dia, cuts):
+def round_rectangle_tool_outside(x0, y0, x1, y1, radius, z_safe, z_rapid,  tool_dia, cuts):
     """
     Rectangle with round corners. the tool is outside of the dimension provided
     """
-    _RoundRectOffset(x0, y0, x1, y1, radius, z_safe, z_surf,  tool_dia, cuts, 0.5 * tool_dia)
+    _RoundRectOffset(x0, y0, x1, y1, radius, z_safe, z_rapid,  tool_dia, cuts, 0.5 * tool_dia)
     
 def peck_drill(x, y, z_safe, z_rapid, peck, z ):
     print "g0 Z%.4f (move tool out of the way)" % z_safe
