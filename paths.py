@@ -221,7 +221,10 @@ def getStrokesFromPath(path, xOff, yOff, scaleX, scaleY, resolution):
     cmds = path[1]
     isClosed = False
     
-    if path[1][-1] == 'Z':
+    if len(path[1]) == 0: # no points in path
+       isClosed = False
+       
+    elif path[1][-1] == 'Z':
         isClosed = True
         # remove z command
         cmds = path[1][0:-1]
@@ -229,8 +232,6 @@ def getStrokesFromPath(path, xOff, yOff, scaleX, scaleY, resolution):
     points = []
     currentPoint = None
     
-    print
-    print "(path)" 
     # split path into strokes
     strokes = []
     stroke = []
@@ -272,7 +273,7 @@ def readPathsFromSvgFile(fileName, selection = None):
         name = node.getAttribute('id')
         dataStr = node.getAttribute('d')
         style = node.getAttribute('style')
-        #print "name: ", name, "\n data: ", data, "\n style: ", style
+        #print "name: ", name, "\n dataStr: ", dataStr, "\n style: ", style
         data = parseCmds(dataStr)
         paths.append( (name, data, style) )
    
@@ -298,12 +299,14 @@ def parseCmds(dataStr):
  idx=0
  cmds = []
  while idx < cnt:
+    
     cmd = t[idx]
-        
-    if cmd == 'Z':
+     #print "cmd",cmd
+     
+    if cmd in ('Z','z'):
         cmds.append( (cmd,) )        
 
-    if cmd in ('M','L'):
+    if cmd in ('M','L','m','l'):
         p = t[idx+1]
         if not ',' in p:
             idx+=1
@@ -312,7 +315,7 @@ def parseCmds(dataStr):
         cmds.append( (cmd, (parsePoint(p),)) )
         idx +=1
     
-    if cmd == 'C':
+    if cmd in ('C','c'):
         idx = idx+1
         p1 = t[idx]
         if not "," in p1:
@@ -331,6 +334,9 @@ def parseCmds(dataStr):
         
         cmds.append( (cmd, (parsePoint(p1), parsePoint(p2), parsePoint(p3)) ) )
     idx +=1
+    #print
+    #print "dataStr", dataStr
+    #print "PATH cmds: ", cmds
  return tuple(cmds)
 
 
