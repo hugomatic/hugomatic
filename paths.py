@@ -205,29 +205,46 @@ def getStrokesFromPath(path, xOff, yOff, scaleX, scaleY, resolution):
     def commandsToPoints(cmds):     
         points = []
         for cmd in cmds:
-            if cmd[0] == 'C':
+            cmdName = cmd[0]
+            if cmdName in ('C','c'):
                 p0 = currentPoint
                 p1 = cmd[1][-3]
                 p2 = cmd[1][-2]
                 p3 = cmd[1][-1]
                 currentPoint = p3
                 cubicBezier(points, p0, p1, p2, p3, resolution)
-            else:
+            elif cmdName in ('L','l','M','m'):
                 currentPoint = cmd[1][-1]
                 points.append(currentPoint)
-        return tuple(points)
+            elif cmdName in ('V','v'):
+                distance = cmd[1][0]
+                x = currentPoint[0]
+                y = currentPoint[1] + distance
+                currentPoint = (x,y)
+                points.append(currentPoint)
+            elif cmdName in ('H','h'):
+                distance = cmd[1][0]
+                x = currentPoint[0] + distance
+                y = currentPoint[1] 
+                currentPoint = (x,y)
+                points.append(currentPoint)
+            elif cmdName in ('S','s'):
+                print "UNSUPPORTED SVG PATH COMMAND:", cmdName
+            elif cmdName in ('Z','z'):
+                print "WTF?"
+            else:
+                print "UNKNOWN SVG PATH COMMAND:", cmdName          
+        return  points
             
-    points = []
+    #points = []
     cmds = path[1]
     isClosed = False
-    
+    lastCmd = path[1][-1][0]
     if len(path[1]) == 0: # no points in path
-       isClosed = False
+        isClosed = False
        
-    elif path[1][-1] == 'Z':
+    elif lastCmd in ('Z','z'):
         isClosed = True
-        # remove z command
-        cmds = path[1][0:-1]
 
     points = []
     currentPoint = None
@@ -236,10 +253,14 @@ def getStrokesFromPath(path, xOff, yOff, scaleX, scaleY, resolution):
     strokes = []
     stroke = []
     for cmd in cmds:
-        if cmd[0] == 'M':
+        # move to command... we add 
+        # a new stroke instance to the list
+        if cmd[0] in ('M','m'):
             stroke = []
             strokes.append(stroke)    
-        stroke.append(cmd)
+        if cmd[0] not in ('Z','z'):
+            stroke.append(cmd)
+            
     
     strokePoints = []
     for stroke in strokes:
@@ -270,18 +291,22 @@ def readPathsFromSvgFile(fileName, selection = None):
     pathNodes = dom.getElementsByTagName("path")
     paths = []
     for node in pathNodes:
-        name = node.getAttribute('id')
-        dataStr = node.getAttribute('d')
-        style = node.getAttribute('style')
-        #print "name: ", name, "\n dataStr: ", dataStr, "\n style: ", style
-        data = parseCmds(dataStr)
-        paths.append( (name, data, style) )
+        data = getPathsFromPathNode(node)
+        paths.append(data)
    
     allPaths =  tuple(paths)
     if selection == None:
         return allPaths
     
     return selectPaths(allPaths, selection)
+
+def getPathsFromPathNode(node):
+        name = node.getAttribute('id')
+        dataStr = node.getAttribute('d')
+        style = node.getAttribute('style')
+        #print "name: ", name, "\n dataStr: ", dataStr, "\n style: ", style
+        data = parseCmds(dataStr)
+        return name, data, style
             
 def parseCmds(dataStr):
 
@@ -306,6 +331,13 @@ def parseCmds(dataStr):
     if cmd in ('Z','z'):
         cmds.append( (cmd,) )        
 
+    if cmd in ('H','h','V','v'):
+        p = t[idx+1]
+        d = float(p)
+        idx +=1
+        cmds.append( (cmd, (d,)) )
+        # print "**", d
+        
     if cmd in ('M','L','m','l'):
         p = t[idx+1]
         if not ',' in p:

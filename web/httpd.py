@@ -35,7 +35,7 @@ PORT = 8080
 index = "index.py"
 
 class Handler(CGIHTTPServer.CGIHTTPRequestHandler):
-    cgi_directories = ['']
+    cgi_directories = ['','/']
     
     def is_cgi(self):
         print "path", self.path
@@ -44,7 +44,8 @@ class Handler(CGIHTTPServer.CGIHTTPRequestHandler):
             print 'redirecting to "%s"' % self.path
         if not self.path.endswith(".py"):
             return None
-        return CGIHTTPServer.CGIHTTPRequestHandler.is_cgi(self)
+        handler = CGIHTTPServer.CGIHTTPRequestHandler.is_cgi(self)
+        return handler
 
 if len(sys.argv) >= 2:
     PORT = int (sys.argv[1])
@@ -59,6 +60,7 @@ os.chdir("../../")
 print "Current working directory: " + os.getcwd()
 
 httpd = BaseHTTPServer.HTTPServer(("", PORT), Handler)
+
 print "serving at port: ", PORT
 httpd.serve_forever()
 

@@ -537,7 +537,7 @@ function OnButtonDownload()
             self._svg_post(name, output_file, form, new_values)
         if form['generation'].value == 'canvas':
             self._canvas_post(name, output_file, form, new_values)
-                   
+        #print "POST IT"           
             
         
     def _printForm(self):

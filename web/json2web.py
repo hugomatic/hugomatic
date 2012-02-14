@@ -51,7 +51,8 @@ td {
         //debug("on load");
         title_div = document.getElementById('title');
         var s = "" + gcode.title + ""
-        title_div.innerHTML = s;
+        var button_str = '<button type="button"  onClick="render();">' + s + '</button>';
+        title_div.innerHTML =   button_str;
         //debug("render image");
         render();
         //debug("render code");
@@ -88,6 +89,8 @@ function render()
     var last=gcode.lines.length-1;
     draw_lines(context, gcode, xform , 0, last);    
 
+    var left_dir = document.getElementById("divLeft");
+    left_dir.innerHTML = "toto";
     debug('render end');
 }
 
@@ -98,7 +101,7 @@ function code()
     var end_line = gcode.line_count;
     var s = format_code(start_line, end_line,gcode);
     code_div = document.getElementById('code');
-    code_div.innerHTML = s;
+    code_div.innerHTML = '<img src="images/holecircle.gif" width="100%" >';
 }
 
   </script>
@@ -134,7 +137,6 @@ function code()
 
 <div id="divLeft" style="overflow: auto;">
 
-<button type="button"  onClick="render();">render</button>
 
 </div></td>
 
@@ -154,6 +156,8 @@ function code()
 </td>
     </tr>
 </tbody></table>
+
+
 </body></html>
 """
     return s1+gcode_json+s2 
