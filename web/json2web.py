@@ -43,7 +43,6 @@ td {
 
     // $$hugomatic$$
     </script> 
-    <script language="javascript" src="hugomatic/web/stylesheets/canvas/split_panels.js"></script>
     <script language="javascript" src="hugomatic/web/stylesheets/canvas/gcode2canvas.js"></script>
     
     <script type="text/javascript">
@@ -53,11 +52,14 @@ td {
         var s = "" + gcode.title + ""
         var button_str = '<button type="button"  onClick="render();">' + s + '</button>';
         title_div.innerHTML =   button_str;
+        
+        onResize();
+   
         //debug("render image");
-        render();
+        
         //debug("render code");
         code(); 
-        //debug("on load... done");       
+        //debug("on load... done");  
         
     }, false);
 
@@ -69,18 +71,7 @@ xform = new Scale(x_off, y_off, scale);
 function render()
 {
     debug('render begin');
-    
-    debug('fill info');
-   // var s = format_gcode_info(gcode);  
-   // var info_div = document.getElementById('gcode_info');
-   // info_div.innerHTML = s;
-   // s = format_hugomatics(gcode);
-   // debug('fill params');
-   // var params_div = document.getElementById('divLeft');
-   // params_div.innerHTML = s;
         
-    debug('draw lines');    
-    
     var context = get_canvas_context('top_viz');    
         
     debug('draw stock');
@@ -89,9 +80,36 @@ function render()
     var last=gcode.lines.length-1;
     draw_lines(context, gcode, xform , 0, last);    
 
-    var left_dir = document.getElementById("divLeft");
-    left_dir.innerHTML = "toto";
     debug('render end');
+}
+
+function onResize()
+{
+
+    var divCanvas = document.getElementById("divCanvas");
+    var canvas =  document.getElementById("top_viz");
+    var code = document.getElementById("code");
+    
+
+    var iWidth = document.body.clientWidth;
+    var sWidth = iWidth.toString();    
+    canvas.width = iWidth;
+    sWidth += "px";
+    divCanvas.style.width = sWidth;
+    
+    code.style.width = sWidth;
+
+    // Height
+    var sHeight = new String();
+    var iHeight = document.body.clientHeight / 2;
+    sHeight = iHeight.toString();
+    sHeight += "px";
+    canvas.height = iHeight;
+    divCanvas.style.height = sHeight;
+    code.style.width = sHeight;
+    
+    render();
+  
 }
 
 function code()
@@ -101,63 +119,31 @@ function code()
     var end_line = gcode.line_count;
     var s = format_code(start_line, end_line,gcode);
     code_div = document.getElementById('code');
-    code_div.innerHTML = '<img src="images/holecircle.gif" width="100%" >';
+    code_div.innerHTML = s;
 }
 
   </script>
 
-    <script language="javascript" src="split_panels.js"></script>
-    <script language="javascript" src="gcode2canvas.js"></script>
-</head><body style="margin: 0pt; overflow: hidden;" onload="OnLoadIndex()" onresize="OnResizeIndex()" onmouseup="OnMouseUpBar()" onmousemove="return OnMouseMoveBar(event);">
+</head>
 
-<!-- Header -->
+<body style="margin: 0pt; overflow: hidden;" onresize="onResize()">
+
+
+
 <div id="title" style="width: 100%; height: 60px;">
-    <table width="100%" cellpadding="0" cellspacing="0">
-        <tbody><tr>
-            <td style="width: 100%;"><img src="indexB_files/image003.gif" width="100%" height="24"></td>
-        </tr>
-        <tr>
-            <td style="width: 100%;"><img src="indexB_files/image002.gif" width="100%" height="34"></td>
-        </tr>
-    </tbody></table>
 </div>
 
-<!-- Vertical Bar -->
-<div id="divVertBar" onmousedown="return OnMouseDownBar(true, event);" style="cursor: col-resize; font-size: 3pt; position: absolute; width: 5px; background-color: orange; height: 518px; left: 203px;"></div>
-
-<!-- Horizontal Bar -->
-<div id="divHorzBar" onmousedown="return OnMouseDownBar(false, event);" style="cursor: row-resize; font-size: 3pt; position: absolute; width: 814px; height: 4px; background-color: orange; left: 203px; top: 371px;"></div>
-
-<!-- divPhantomBar -->
-<div id="divPhantomBar" style="display: none; font-size: 3pt; position: absolute; background-color: rgb(51, 102, 153);"></div>
-
-<table style="border: 3px solid orange;" cellpadding="0" cellspacing="0">
-    <tbody><tr>
-        <td rowspan="2" style="border: 2px solid orange;">
-
-<div id="divLeft" style="overflow: auto;">
-
-
-</div></td>
-
-        <td style="border: 2px solid orange;">
-
-<div id="divCanvas" style="overflow: auto; width: 804px; height: 306px; background-color:black">
-    <canvas id="top_viz">Your browser does not have support for Canvas.</canvas>
+<div id="divCanvas" style="overflow: auto; width: 804px; height: 600px; background-color:black">
+    <canvas id="top_viz">
+        Your browser does not have support for Canvas.
+    </canvas>
 </div>
 
-</td>
-    </tr>
-    <tr>
-        <td style="border: 2px solid orange;">
-
-<div style="overflow: auto;" id="code"></div>
-
-</td>
-    </tr>
-</tbody></table>
+<div style="overflow: auto;" id="code">
+</div>
 
 
-</body></html>
+</body>
+</html>
 """
     return s1+gcode_json+s2 

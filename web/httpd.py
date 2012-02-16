@@ -45,6 +45,7 @@ class Handler(CGIHTTPServer.CGIHTTPRequestHandler):
         if not self.path.endswith(".py"):
             return None
         handler = CGIHTTPServer.CGIHTTPRequestHandler.is_cgi(self)
+        print "is_cgi", handler
         return handler
 
 if len(sys.argv) >= 2:

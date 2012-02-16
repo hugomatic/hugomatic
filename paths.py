@@ -213,27 +213,44 @@ def getStrokesFromPath(path, xOff, yOff, scaleX, scaleY, resolution):
                 p3 = cmd[1][-1]
                 currentPoint = p3
                 cubicBezier(points, p0, p1, p2, p3, resolution)
-            elif cmdName in ('L','l','M','m'):
+            elif cmdName in ('L','M'):
                 currentPoint = cmd[1][-1]
                 points.append(currentPoint)
-            elif cmdName in ('V','v'):
+            elif cmdName in ('l','m'):
+                delta = cmd[1][-1]
+                x,y = points[-1]
+                currentPoint = (x+delta[0], y+delta[1])
+                points.append(currentPoint)    
+            elif cmdName == 'V':
+                distance = cmd[1][0]
+                x = currentPoint[0]
+                y = distance
+                currentPoint = (x,y)
+                points.append(currentPoint)            
+            elif cmdName == 'v':
                 distance = cmd[1][0]
                 x = currentPoint[0]
                 y = currentPoint[1] + distance
                 currentPoint = (x,y)
                 points.append(currentPoint)
-            elif cmdName in ('H','h'):
+            elif cmdName  == 'H':
+                distance = cmd[1][0]
+                x = distance
+                y = currentPoint[1] 
+                currentPoint = (x,y)
+                points.append(currentPoint)                    
+            elif cmdName  == 'h':
                 distance = cmd[1][0]
                 x = currentPoint[0] + distance
                 y = currentPoint[1] 
                 currentPoint = (x,y)
                 points.append(currentPoint)
-            elif cmdName in ('S','s'):
-                print "UNSUPPORTED SVG PATH COMMAND:", cmdName
+            elif cmdName in ('S','s', 'Q', 'q', 'T','t', 'A', 'a'):
+                print "(UNSUPPORTED SVG PATH COMMAND:", cmdName, ")"
             elif cmdName in ('Z','z'):
-                print "WTF?"
+                print "(unexpected Z command )"
             else:
-                print "UNKNOWN SVG PATH COMMAND:", cmdName          
+                print "(UNKNOWN SVG PATH COMMAND:", cmdName, ")"         
         return  points
             
     #points = []
