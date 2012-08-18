@@ -26,10 +26,10 @@ import math
 
 # Exception class for program errors
 class UtilsError(Exception):
-     def __init__(self, value):
-         self.value = value
-     def __str__(self):
-         return repr(self.value)
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
 
 def gCut(points, zsafe=None, zsurf=None, feed = None):
     if zsafe != None:
@@ -107,10 +107,6 @@ def staircase(closed_curve_points, cuts, zsafe=None, zsurf=None):
     t = tuple(xyz)   
     gCut(t, zsafe, zsurf)  
     return t
-    
-    
-     
-
 
 def selectPaths(paths, selection):
     selectedPaths = []
@@ -206,55 +202,88 @@ def getStrokesFromPath(path, xOff, yOff, scaleX, scaleY, resolution):
         points = []
         for cmd in cmds:
             cmdName = cmd[0]
-            if cmdName in ('C','c'):
+            if cmdName == 'C':
                 p0 = currentPoint
                 p1 = cmd[1][-3]
                 p2 = cmd[1][-2]
                 p3 = cmd[1][-1]
                 currentPoint = p3
                 cubicBezier(points, p0, p1, p2, p3, resolution)
+                
+            elif cmdName == 'c':
+                p0 = currentPoint
+                rp1 = cmd[1][-3]
+                rp2 = cmd[1][-2]
+                rp3 = cmd[1][-1]
+                
+                x =0
+                y =0
+                if len(points) > 0:
+                    x,y = points[-1]
+                
+                p1 = (rp1[0]+x, rp1[1]+y)
+                p2 = (rp2[0]+x, rp2[1]+y)
+                p3 = (rp3[0]+x, rp3[1]+y)
+                    
+                currentPoint = p3
+                cubicBezier(points, p0, p1, p2, p3, resolution)
+                    
             elif cmdName in ('L','M'):
                 currentPoint = cmd[1][-1]
                 points.append(currentPoint)
+                
             elif cmdName in ('l','m'):
                 delta = cmd[1][-1]
-                x,y = points[-1]
+                x =0
+                y =0
+                if len(points) > 0:
+                    x,y = points[-1]
                 currentPoint = (x+delta[0], y+delta[1])
                 points.append(currentPoint)    
+                
             elif cmdName == 'V':
                 distance = cmd[1][0]
                 x = currentPoint[0]
                 y = distance
                 currentPoint = (x,y)
-                points.append(currentPoint)            
+                points.append(currentPoint)
+                            
             elif cmdName == 'v':
                 distance = cmd[1][0]
                 x = currentPoint[0]
                 y = currentPoint[1] + distance
                 currentPoint = (x,y)
                 points.append(currentPoint)
+                
             elif cmdName  == 'H':
                 distance = cmd[1][0]
                 x = distance
                 y = currentPoint[1] 
                 currentPoint = (x,y)
-                points.append(currentPoint)                    
+                points.append(currentPoint)     
+                               
             elif cmdName  == 'h':
                 distance = cmd[1][0]
                 x = currentPoint[0] + distance
                 y = currentPoint[1] 
                 currentPoint = (x,y)
                 points.append(currentPoint)
-            elif cmdName in ('S','s', 'Q', 'q', 'T','t', 'A', 'a'):
-                print "(UNSUPPORTED SVG PATH COMMAND:", cmdName, ")"
+
             elif cmdName in ('Z','z'):
                 print "(unexpected Z command )"
+                
+                
+            elif cmdName in ('S','s', 'Q', 'q', 'T','t', 'A', 'a'):
+                print "(UNSUPPORTED SVG PATH COMMAND:", cmdName, ")"
+                
             else:
                 print "(UNKNOWN SVG PATH COMMAND:", cmdName, ")"         
         return  points
             
     #points = []
     cmds = path[1]
+    
+    
     isClosed = False
     lastCmd = path[1][-1][0]
     if len(path[1]) == 0: # no points in path
@@ -274,7 +303,8 @@ def getStrokesFromPath(path, xOff, yOff, scaleX, scaleY, resolution):
         # a new stroke instance to the list
         if cmd[0] in ('M','m'):
             stroke = []
-            strokes.append(stroke)    
+            strokes.append(stroke)
+                
         if cmd[0] not in ('Z','z'):
             stroke.append(cmd)
             
@@ -325,67 +355,61 @@ def getPathsFromPathNode(node):
         data = parseCmds(dataStr)
         return name, data, style
             
-def parseCmds(dataStr):
 
- def parsePoint(p):
-    toks = p.split(',')
-    x = float(toks[0])
-    y = float(toks[1])
-    return (x, y)
-
- toks = dataStr.split()
- cnt = 0
- it = iter(toks)
- t = tuple(it)
- cnt = len(t)
- idx=0
- cmds = []
- while idx < cnt:
+ 
+def parseCmds_with_repeats(data_str):
     
-    cmd = t[idx]
-     #print "cmd",cmd
-     
-    if cmd in ('Z','z'):
-        cmds.append( (cmd,) )        
-
-    if cmd in ('H','h','V','v'):
-        p = t[idx+1]
-        d = float(p)
-        idx +=1
-        cmds.append( (cmd, (d,)) )
-        # print "**", d
-        
-    if cmd in ('M','L','m','l'):
-        p = t[idx+1]
-        if not ',' in p:
-            idx+=1
-            p = p + "," + t[idx+1] 
-        
-        cmds.append( (cmd, (parsePoint(p),)) )
-        idx +=1
+    cmds = []
     
-    if cmd in ('C','c'):
-        idx = idx+1
-        p1 = t[idx]
-        if not "," in p1:
-            idx+=1
-            p1 = p1 + "," + t[idx] 
-        idx+=1
-        p2 = t[idx]
-        if not ',' in p2:
-            idx+=1
-            p2 = p2 + "," + t[idx]
-        idx+=1
-        p3 = t[idx]
-        if not ',' in p3:
-            idx+=1
-            p3 = p3 + "," + t[idx] 
-        
-        cmds.append( (cmd, (parsePoint(p1), parsePoint(p2), parsePoint(p3)) ) )
-    idx +=1
-    #print
-    #print "dataStr", dataStr
-    #print "PATH cmds: ", cmds
- return tuple(cmds)
+    """
+    the current_cmd format is: [c,[n0,n1...n]] where c is the command letter and [n0...n] is a list of numbers
+    """
+    def append_cmd(current_cmd):
+        if current_cmd == None:
+            return
+        nbs = current_cmd[1]
+        command = current_cmd[0]
+        if command.lower() == 'c':
+            i =0
+            while i < len(nbs):
+                cmds.append( (command, ((nbs[i], nbs[i+1]),(nbs[i+2],nbs[i+3]),(nbs[i+4],nbs[i+5]))) )
+                i+=6
+        if command.lower() == 'm':
+            cmds.append( (command, ((nbs[0],nbs[1]), ), )  )   
 
+        if command.lower()  == 'l':
+            cmds.append( (command, ((nbs[0],nbs[1]), ), )  )   
+
+        if command.lower()  == 'v':
+            cmds.append( (command, (nbs[0],), )  )  
+
+        if command.lower()  == 'h':
+            cmds.append( (command, (nbs[0],), )  ) 
+            
+        if command.lower()  == 'z':
+            cmds.append( (command,) )    
+         
+        
+    toks = data_str.split()
+    
+    current_cmd = None
+    for i,t in enumerate(toks):
+        if t.lower() in ['z','c','m','l','v','h']:
+            append_cmd(current_cmd)
+            current_cmd = [t,[]]
+        else:
+            number_str = t.split(',')
+            
+            for s in number_str:
+                n = s.strip()
+                if len(n) >0:
+                    nb = float(n)
+                    current_cmd[1].append(nb)
+    append_cmd(current_cmd)    
+    return tuple(cmds)
+
+def parseCmds(data_str):
+    #cmds = parseCmds_with_repeats(data_str)
+    cmds = parseCmds_with_repeats(data_str)
+    return cmds
 

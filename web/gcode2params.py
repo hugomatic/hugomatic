@@ -15,7 +15,7 @@ class Gcode2Params(object):
                     'y':0., 
                     'z':0., 
                     'f':0., 
-                    'tool_dia':1, 
+                    'tool_dia':0.1, 
                     'units':'default',
                      }
         
